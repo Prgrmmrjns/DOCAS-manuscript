@@ -1,0 +1,25 @@
+\begin{table}[H]
+\centering
+\caption{The 10 LLM-generated clinical profiles with representative bias functions.}
+\label{tab:profiles}
+{\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{0.9}
+\begin{tabularx}{\textwidth}{p{0.34\textwidth}X}
+\toprule
+\textbf{Profile archetype} & \textbf{Representative bias functions} \\
+\midrule
+Septic shock + vasopressor dependency         & Sepsis flag $\to$ 95\%, epinephrine $\to$ 80\%, MAP scale $\times$0.75 \\
+Renal failure + fluid overload                & Creatinine scale $\times$2.5, urine-output shift $-$30\% \\
+ARDS + ventilator dependency                  & Earlier ventilator start, $\text{SpO}_2$ scale $\times$0.90 \\
+Neurological critical illness + sedation      & GCS shift $-$4, sedation flag $\to$ 90\% \\
+Elderly multi-comorbid                        & Age shift $+$15 yrs, heart failure $\to$ 80\%, CKD $\to$ 70\% \\
+Post-cardiac arrest + hemodynamic instability & Cardiac-arrest flag $\to$ 95\%, vasopressor $\to$ 75\% \\
+Low-risk control                              & Age shift $-$10 yrs, comorbidities $\to$ 5\%, minimal devices \\
+False-positive archetype                      & High-risk predictors elevated, outcome forced to survival \\
+False-negative archetype                      & Mortality-linked predictors dampened, outcome forced to death \\
+Musculoskeletal frailty + sarcopenia          & BMI scale $\times$0.85, functional-reserve markers reduced \\
+\bottomrule
+\end{tabularx}
+\par}
+\end{table}

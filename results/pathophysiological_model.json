@@ -1,0 +1,109 @@
+{
+  "organ_systems": [
+    {
+      "system_name": "Cardiovascular System",
+      "mechanism": "Vasopressor-Driven Hemodynamic Instability",
+      "features": [
+        "Epinephrine_avg",
+        "Norepinephrine_avg",
+        "Dobutamine_avg"
+      ]
+    },
+    {
+      "system_name": "Renal System",
+      "mechanism": "Fluid Overload & Renal Dysfunction",
+      "features": [
+        "Foley_sum",
+        "organ_dysfunction"
+      ]
+    },
+    {
+      "system_name": "Metabolic & Endocrine System",
+      "mechanism": "Nutritional Status & Comorbidities",
+      "features": [
+        "BMI",
+        "diabetes",
+        "hypertension",
+        "anemia",
+        "obesity"
+      ]
+    },
+    {
+      "system_name": "Infectious & Inflammatory System",
+      "mechanism": "Sepsis-Induced Organ Dysfunction",
+      "features": [
+        "Sepsis3"
+      ]
+    },
+    {
+      "system_name": "Demographic & Comorbidity System",
+      "mechanism": "Baseline Patient Risk Profile",
+      "features": [
+        "anchor_age",
+        "NSURG",
+        "NMED",
+        "CMED"
+      ]
+    }
+  ],
+  "cross_system_interactions": [
+    {
+      "source_system": "Cardiovascular System",
+      "target_system": "Renal System",
+      "clinical_coupling": "Vasopressor-Induced Renal Hypoperfusion",
+      "underlying_shapiq_features": [
+        "Norepinephrine_avg",
+        "Foley_sum"
+      ]
+    },
+    {
+      "source_system": "Cardiovascular System",
+      "target_system": "Metabolic & Endocrine System",
+      "clinical_coupling": "Catecholamine-Mediated Metabolic Stress",
+      "underlying_shapiq_features": [
+        "Epinephrine_avg",
+        "Norepinephrine_avg",
+        "BMI"
+      ]
+    },
+    {
+      "source_system": "Renal System",
+      "target_system": "Metabolic & Endocrine System",
+      "clinical_coupling": "Uremia & Fluid Overload Worsening Metabolic State",
+      "underlying_shapiq_features": [
+        "Foley_sum",
+        "BMI"
+      ]
+    },
+    {
+      "source_system": "Infectious & Inflammatory System",
+      "target_system": "Metabolic & Endocrine System",
+      "clinical_coupling": "Sepsis-Induced Hypermetabolic State",
+      "underlying_shapiq_features": [
+        "Sepsis3",
+        "BMI"
+      ]
+    },
+    {
+      "source_system": "Demographic & Comorbidity System",
+      "target_system": "Cardiovascular System",
+      "clinical_coupling": "Age & Comorbidity-Linked Vasopressor Sensitivity",
+      "underlying_shapiq_features": [
+        "anchor_age",
+        "BMI"
+      ]
+    },
+    {
+      "source_system": "Demographic & Comorbidity System",
+      "target_system": "Metabolic & Endocrine System",
+      "clinical_coupling": "Comorbidity-Driven Metabolic Dysregulation",
+      "underlying_shapiq_features": [
+        "diabetes",
+        "BMI",
+        "hypertension"
+      ]
+    }
+  ],
+  "outcome_node": "ICU Mortality Risk (Survival vs. Death)",
+  "graphviz_dot": "digraph pathophysiology {\n  rankdir=TB;\n  node [shape=box, style=filled, fontname=\"Arial\"];\n\n  // Signal nodes (blue)\n  anchor_age [label=\"Age\", fillcolor=\"#a0c4e8\"];\n  Epinephrine_avg [label=\"Epinephrine\", fillcolor=\"#a0c4e8\"];\n  Norepinephrine_avg [label=\"Norepinephrine\", fillcolor=\"#a0c4e8\"];\n  Dobutamine_avg [label=\"Dobutamine\", fillcolor=\"#a0c4e8\"];\n  Foley_sum [label=\"Urine Output\", fillcolor=\"#a0c4e8\"];\n  BMI [label=\"BMI\", fillcolor=\"#a0c4e8\"];\n  diabetes [label=\"Diabetes\", fillcolor=\"#a0c4e8\"];\n  hypertension [label=\"Hypertension\", fillcolor=\"#a0c4e8\"];\n  anemia [label=\"Anemia\", fillcolor=\"#a0c4e8\"];\n  obesity [label=\"Obesity\", fillcolor=\"#a0c4e8\"];\n  Sepsis3 [label=\"Sepsis\", fillcolor=\"#a0c4e8\"];\n  NSURG [label=\"Surgical\", fillcolor=\"#a0c4e8\"];\n  NMED [label=\"Medical\", fillcolor=\"#a0c4e8\"];\n  CMED [label=\"Comorbidities\", fillcolor=\"#a0c4e8\"];\n\n  // System nodes (orange)\n  Cardiovascular [label=\"Cardiovascular System\\nVasopressor-Driven Hemodynamic Instability\", fillcolor=\"#ffb366\"];\n  Renal [label=\"Renal System\\nFluid Overload & Renal Dysfunction\", fillcolor=\"#ffb366\"];\n  Metabolic [label=\"Metabolic & Endocrine System\\nNutritional Status & Comorbidities\", fillcolor=\"#ffb366\"];\n  Infectious [label=\"Infectious & Inflammatory System\\nSepsis-Induced Organ Dysfunction\", fillcolor=\"#ffb366\"];\n  Demographic [label=\"Demographic & Comorbidity System\\nBaseline Patient Risk Profile\", fillcolor=\"#ffb366\"];\n\n  // Outcome node (green)\n  Mortality [label=\"ICU Mortality Risk\\n(Survival vs. Death)\", fillcolor=\"#81c784\"];\n\n  // Edges from signals to systems\n  anchor_age -> Demographic;\n  Epinephrine_avg -> Cardiovascular;\n  Norepinephrine_avg -> Cardiovascular;\n  Dobutamine_avg -> Cardiovascular;\n  Foley_sum -> Renal;\n  BMI -> Metabolic;\n  diabetes -> Metabolic;\n  hypertension -> Metabolic;\n  anemia -> Metabolic;\n  obesity -> Metabolic;\n  Sepsis3 -> Infectious;\n  NSURG -> Demographic;\n  NMED -> Demographic;\n  CMED -> Demographic;\n\n  // Cross-system interactions\n  Cardiovascular -> Renal [label=\"Vasopressor-Induced Renal Hypoperfusion\"];\n  Cardiovascular -> Metabolic [label=\"Catecholamine-Mediated Metabolic Stress\"];\n  Renal -> Metabolic [label=\"Uremia & Fluid Overload Worsening Metabolic State\"];\n  Infectious -> Metabolic [label=\"Sepsis-Induced Hypermetabolic State\"];\n  Demographic -> Cardiovascular [label=\"Age & Comorbidity-Linked Vasopressor Sensitivity\"];\n  Demographic -> Metabolic [label=\"Comorbidity-Driven Metabolic Dysregulation\"];\n\n  // Systems to outcome\n  Cardiovascular -> Mortality;\n  Renal -> Mortality;\n  Metabolic -> Mortality;\n  Infectious -> Mortality;\n  Demographic -> Mortality;\n}"
+}

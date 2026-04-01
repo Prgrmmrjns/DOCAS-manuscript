@@ -1,0 +1,197 @@
+{
+  "sample_n_per_cohort": 4,
+  "mean_abs_interaction_total_default": 11.529390086632787,
+  "mean_abs_interaction_total_profiles": 12.662544853175975,
+  "top_features_more_interactive_in_profiles": [
+    {
+      "feature": "organ_dysfunction",
+      "delta_interaction_mass": 0.9246019059627506
+    },
+    {
+      "feature": "anchor_age",
+      "delta_interaction_mass": 0.6666519458547391
+    },
+    {
+      "feature": "BMI",
+      "delta_interaction_mass": 0.3423426781038492
+    },
+    {
+      "feature": "heart_failure",
+      "delta_interaction_mass": 0.28818567589451255
+    },
+    {
+      "feature": "CMED",
+      "delta_interaction_mass": 0.2587758557720846
+    },
+    {
+      "feature": "anemia",
+      "delta_interaction_mass": 0.23524542543112498
+    },
+    {
+      "feature": "diabetes",
+      "delta_interaction_mass": 0.22617418480625257
+    },
+    {
+      "feature": "Foley_sum",
+      "delta_interaction_mass": 0.21423027724966737
+    }
+  ],
+  "top_features_less_interactive_in_profiles": [
+    {
+      "feature": "Norepinephrine_avg",
+      "delta_interaction_mass": -0.7794137619464561
+    },
+    {
+      "feature": "OMED",
+      "delta_interaction_mass": -0.542368309428814
+    },
+    {
+      "feature": "NMED",
+      "delta_interaction_mass": -0.4429283493407024
+    },
+    {
+      "feature": "Epinephrine_avg",
+      "delta_interaction_mass": -0.43203459945704914
+    },
+    {
+      "feature": "obesity",
+      "delta_interaction_mass": -0.0447537483834301
+    },
+    {
+      "feature": "NSURG",
+      "delta_interaction_mass": -0.0003918800352015611
+    },
+    {
+      "feature": "cancer",
+      "delta_interaction_mass": 0.0
+    },
+    {
+      "feature": "renal_failure",
+      "delta_interaction_mass": 0.0
+    }
+  ],
+  "top_edges_default": [
+    {
+      "cohort": "default",
+      "feature_a": "Epinephrine_avg",
+      "feature_b": "Norepinephrine_avg",
+      "mean_abs_interaction": 0.8853479716591718
+    },
+    {
+      "cohort": "default",
+      "feature_a": "Norepinephrine_avg",
+      "feature_b": "Foley_sum",
+      "mean_abs_interaction": 0.4329386139195316
+    },
+    {
+      "cohort": "default",
+      "feature_a": "Foley_sum",
+      "feature_b": "BMI",
+      "mean_abs_interaction": 0.4075698153117338
+    },
+    {
+      "cohort": "default",
+      "feature_a": "Epinephrine_avg",
+      "feature_b": "BMI",
+      "mean_abs_interaction": 0.3685362243112713
+    },
+    {
+      "cohort": "default",
+      "feature_a": "BMI",
+      "feature_b": "OMED",
+      "mean_abs_interaction": 0.29820892935899085
+    },
+    {
+      "cohort": "default",
+      "feature_a": "Norepinephrine_avg",
+      "feature_b": "NMED",
+      "mean_abs_interaction": 0.2509397006657401
+    },
+    {
+      "cohort": "default",
+      "feature_a": "anchor_age",
+      "feature_b": "BMI",
+      "mean_abs_interaction": 0.2379238644789211
+    },
+    {
+      "cohort": "default",
+      "feature_a": "anchor_age",
+      "feature_b": "Epinephrine_avg",
+      "mean_abs_interaction": 0.23007939374705078
+    },
+    {
+      "cohort": "default",
+      "feature_a": "Norepinephrine_avg",
+      "feature_b": "BMI",
+      "mean_abs_interaction": 0.1576443319680716
+    },
+    {
+      "cohort": "default",
+      "feature_a": "Norepinephrine_avg",
+      "feature_b": "anemia",
+      "mean_abs_interaction": 0.13146250607806093
+    }
+  ],
+  "top_edges_profiles": [
+    {
+      "cohort": "profiles",
+      "feature_a": "Norepinephrine_avg",
+      "feature_b": "BMI",
+      "mean_abs_interaction": 0.581782609618163
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "anchor_age",
+      "feature_b": "Epinephrine_avg",
+      "mean_abs_interaction": 0.35104718599631046
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "anchor_age",
+      "feature_b": "BMI",
+      "mean_abs_interaction": 0.33382326214791047
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "Foley_sum",
+      "feature_b": "organ_dysfunction",
+      "mean_abs_interaction": 0.3006276828898121
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "Epinephrine_avg",
+      "feature_b": "Foley_sum",
+      "mean_abs_interaction": 0.25159613645531803
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "anchor_age",
+      "feature_b": "Foley_sum",
+      "mean_abs_interaction": 0.24901725066923824
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "anchor_age",
+      "feature_b": "organ_dysfunction",
+      "mean_abs_interaction": 0.2433540246574117
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "heart_failure",
+      "feature_b": "BMI",
+      "mean_abs_interaction": 0.24112982273830647
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "Epinephrine_avg",
+      "feature_b": "Norepinephrine_avg",
+      "mean_abs_interaction": 0.2285836416243107
+    },
+    {
+      "cohort": "profiles",
+      "feature_a": "Foley_sum",
+      "feature_b": "BMI",
+      "mean_abs_interaction": 0.20689558836676836
+    }
+  ]
+}

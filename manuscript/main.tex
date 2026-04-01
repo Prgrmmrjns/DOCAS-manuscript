@@ -1,0 +1,160 @@
+\documentclass[times, review, 10pt]{elsarticle}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[top=4.3cm, right=4.8cm, bottom=4.3cm, left=4.8cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{makecell}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\journal{Pattern Recognition}
+\providecommand{\mathdefault}[1]{#1}
+
+% Match manuscript review spacing style.
+\renewcommand{\baselinestretch}{2.0}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{iSHAP: Informed SHAP for Domain-Grounded Explainability in Machine Learning}
+
+\author{First Author}
+\author{Second Author}
+\address{Institution Placeholder}
+
+\begin{abstract}
+\textbf{Introduction:} While machine learning models offer high predictive accuracy in healthcare, their clinical adoption requires robust explainability. Standard SHAP provides valuable marginal attributions but often obscures joint feature interactions and ignores underlying causal data-generating processes. To address these gaps, we introduce iSHAP (informed SHAP), a modular framework for domain-grounded explainability in tabular prediction, applicable across domains and demonstrated here in biomedicine.
+
+\textbf{Methods:} iSHAP integrates two core applications: (1) Large Language Model (LLM)-driven generation of realistic synthetic tabular cohorts, enabling the joint evaluation of TreeSHAP and interaction-based \texttt{shapiq} on a unified, stress-tested distribution; and (2) a combined causal-contextual layer that uses SHAP/\texttt{shapiq} evidence plus domain knowledge to generate explicit causal hypotheses and structured explanatory narratives. We demonstrate this pipeline in a high-stakes healthcare example using a LightGBM model trained on MIMIC-IV intensive care unit (ICU) tabular data, with Mistral (\url{https://docs.mistral.ai/}) serving as the LLM engine.
+
+\textbf{Results:} Applying iSHAP to in-hospital mortality prediction reveals that standard SHAP permutations can dilute clinically plausible precedence relations. By contrast, our unified-cohort design sharpens clinically coupled variables into tighter interaction neighborhoods using \texttt{shapiq}. The resulting SHAP/\texttt{shapiq} evidence supports clinically coherent causal hypotheses and a consolidated explanatory model of key mechanisms and risk pathways.
+
+\textbf{Discussion:} iSHAP bridges the gap between statistical feature attribution and clinical reasoning. By forcing agreement checks across marginal, interaction, and order-constrained views, the framework exposes where explanations are stable and where they depend on causal assumptions, ultimately yielding a more trustworthy and actionable explanatory model for clinical decision support.
+\end{abstract}
+
+\begin{keyword}
+Explainable AI \sep SHAP \sep Biomedical AI \sep Clinical Decision Support \sep Causal Explainability
+\end{keyword}
+
+\end{frontmatter}
+
+\section{Introduction}
+
+The integration of machine learning (ML) into healthcare and biomedical research has accelerated the need for explainable artificial intelligence (XAI). In clinical settings, predictive models must not only achieve high accuracy but also provide explanations that are faithful to the predictor and credible to medical professionals \cite{arrieta2020explainable}. Explainability is crucial for clinical decision support, where understanding the rationale behind a prediction can directly influence patient care, treatment planning, and scientific discovery \cite{rane2023explainable,ghanvatkar2024evaluating}. 
+Among XAI methods, SHapley Additive exPlanations (SHAP) \cite{lundberg2017unified} has become a standard due to its solid game-theoretic foundation, which fairly distributes a model's prediction among its input features. People use SHAP because it provides clear, individualized marginal attributions that help clinicians identify key risk factors for specific patients. However, SHAP has notable limitations. It primarily yields marginal attributions, hiding the joint behavior and complex interactions between features. Furthermore, standard SHAP workflows often struggle with correlated features, the choice of background datasets, and the generation of clinically implausible counterfactuals during permutation \cite{aas2021explaining,janzing2020feature,molnar2022interpretable}. In high-stakes medical settings, these gaps are practical rather than cosmetic: clinicians must distinguish between severity markers, treatment proxies, and potentially actionable levers before an explanation can safely inform decisions, audits, or prospective study design \cite{doshi2017towards}.
+To address the limitation of hidden joint behaviors, recent interaction frameworks such as \texttt{shapiq} \cite{muschalik2024shapiq} have been developed. \texttt{shapiq} extends the Shapley value concept to quantify pairwise and higher-order feature interactions efficiently. By exposing the interaction structure that single-feature bars miss, \texttt{shapiq} allows researchers to see how features couple together---for instance, how a specific comorbidity interacts with a prescribed treatment to affect mortality risk. 
+Simultaneously, the field of XAI is increasingly recognizing the importance of causality. Standard SHAP and \texttt{shapiq} are observational and cannot, on their own, establish intervention-valid effects \cite{carloni2025role}. In applied settings, this motivates a hypothesis-generation layer that combines attribution patterns with domain knowledge, uncertainty statements, and explicit falsification logic so that causal interpretation remains transparent and testable.
+Concurrently, Large Language Models (LLMs) have emerged as powerful tools for enhancing ML workflows. In healthcare, LLMs are increasingly used for generating realistic synthetic tabular data, which helps mitigate privacy concerns and data scarcity while allowing for controlled stress-testing of models \cite{tornqvist2024text,smolyak2024large}. Furthermore, LLMs excel at domain knowledge integration, capable of translating complex, quantitative XAI outputs into structured, human-readable clinical narratives \cite{cappuccio2025integrating}.
+Building on these advancements, we introduce \textbf{iSHAP} (informed SHAP), a framework designed to provide domain-grounded explainability for tabular machine-learning models across application areas. In this paper we use medicine as a primary, high-stakes exemplar: iSHAP moves beyond raw feature-importance scores and offers a structured pipeline that bridges statistical attribution and domain reasoning. The framework is organized into two core applications:
+
+\begin{enumerate}[label=(\arabic*), leftmargin=*, itemsep=0.15em]
+    \item \textbf{Synthetic realistic data generation.} LLMs are used to emit constrained, clinically plausible patient profiles. We materialize these into aligned tabular rows to run TreeSHAP and \texttt{shapiq} on the \emph{same} cohort. This provides a unified, stress-tested distribution to compare marginal and interaction effects without confounding from background data shifts.
+    \item \textbf{Combined causal-contextual explanation.} Building on the synthetic cohort and attribution summaries, we infer conservative causal hypotheses with an LLM and domain knowledge, then map SHAP/\texttt{shapiq}/causal artifacts into structured clinical narratives and an explanatory mechanism model.
+\end{enumerate}
+
+Importantly, these two applications of iSHAP build on top of each other---culminating in a robust, clinically interpretable explanation that is grounded in the model's behavior and domain knowledge.
+
+
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Study design and pipeline}
+We predict in-hospital mortality from MIMIC-IV ICU tabular features (demographics, comorbidities, treatments, aggregates). Figure~\ref{fig:synthetic_pipeline} shows the full workflow. After training a fixed LightGBM model (3-fold CV AUROC $0.702 \pm 0.011$; hold-out AUROC $0.715$, PR-AUC $0.294$), three summaries are passed to the LLM: a global SHAP context (top-20 features by mean $|\text{SHAP}|$), a task descriptor (feature statistics, class prevalence), and a stratified prediction audit (correct, false-positive, false-negative, and uncertain rows). The LLM (Mistral; \url{https://docs.mistral.ai/}) returns \textbf{10 targeted clinical profile templates} (Table~\ref{tab:profiles}) covering high-risk, low-risk, and stress-test scenarios. Each template specifies \emph{bias functions} (shift, scale, affine, set-prevalence) applied to sampled real training rows, yielding 100 synthetic rows per template ($\approx$1,000 total). Rows are schema-aligned and range-validated before attribution. We treat synthetic generation as an evaluation scaffold---not as replacement training data---so model fitting remains anchored in observed ICU records.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\linewidth]{ishap_synthetic_pipeline.png}
+    \caption{iSHAP profile-generation pipeline. Real MIMIC-IV features train a LightGBM classifier; three model summaries (SHAP context, task descriptor, prediction audit) are passed to the LLM, which emits 10 targeted profile templates. Each template applies bias functions to real training rows to produce $\approx$1,000 schema-aligned synthetic rows for the TreeSHAP and \texttt{shapiq} comparison.}
+    \label{fig:synthetic_pipeline}
+\end{figure}
+
+\input{table_profiles.tex}
+
+\subsection{Single causal-contextual application}
+\label{sec:causal_context_method}
+The second iSHAP application turns model outputs into an explanatory model that clinicians can read directly. We take the strongest SHAP features and \texttt{shapiq} interactions, summarize their empirical patterns on the synthetic cohort, and pass this evidence to the LLM together with domain context.
+
+The LLM then produces three linked outputs: (1) conservative causal hypotheses, (2) an organ-system explanatory model, and (3) a machine-readable graph specification (Graphviz DOT) for visualization. We treat all causal statements as hypotheses, not proof, and keep uncertainty explicit to improve traceability and reduce over-claiming \cite{arrieta2020explainable,prosperi2020causal}.
+
+\section{Results}
+
+\subsection{SHAP and shapiq on the synthetic profile cohort}
+\label{sec:results_shapiq}
+The same LLM-shaped synthetic rows feed both explainers: Figure~\ref{fig:shap_beeswarm_compare} contrasts baseline informed SHAP on held-out real data (left) with path-dependent TreeSHAP on the profile cohort (right); Figure~\ref{fig:shapiq_graph_compare} shows \texttt{shapiq} interaction graphs under the same held-out vs.\ profile split.
+This unified-cohort design clarifies interpretation: differences between the two plots reflect explanation families (marginals versus interactions) under shared patient profiles, while differences between held-out and profile settings reflect distributional stress tests rather than model retraining. Across runs, the profile cohort tends to sharpen clinically coupled variables into tighter interaction neighborhoods, consistent with \texttt{shapiq}'s emphasis on pairwise structure \cite{muschalik2024shapiq}.
+To compare explanation quality with an objective criterion, we follow the SHAP benchmark style for tabular classification and report explanation error on the same evaluation batch ($n=80$). Table~\ref{tab:shap_error_comparison} lists the explanation error metrics for both default SHAP and iSHAP.
+
+\begin{table}[H]
+\centering
+\caption{Default SHAP vs. iSHAP explanation error (SHAP benchmark style; prediction scale: raw score).}
+\label{tab:shap_error_comparison}
+{\scriptsize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.95}
+\begin{tabularx}{0.74\textwidth}{p{0.34\textwidth}p{0.18\textwidth}p{0.18\textwidth}}
+\toprule
+\textbf{Metric} & \textbf{Default SHAP} & \textbf{iSHAP} \\
+\midrule
+Explanation error (lower better) & \textcolor{black}{\textbf{0.1472}} & \textcolor{gray}{0.1558} \\
+\bottomrule
+\end{tabularx}
+\par}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{mimic_shap_vs_ishap_beeswarm.png}
+    \caption{Same LightGBM model; \textbf{left:} informed SHAP baseline (TreeSHAP with background on held-out rows); \textbf{right:} TreeSHAP on the synthetic profile cohort (Figure~\ref{fig:synthetic_pipeline}).}
+    \label{fig:shap_beeswarm_compare}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{mimic_shapiq_interactions_graph.png}
+    \caption{\texttt{shapiq} interaction graphs for the same two regimes (held-out vs.\ profile cohort). Node size $\propto$ marginal SHAP mass; edge width $\propto$ mean $|\text{pairwise interaction}|$; only the top-15 interactions per panel are shown.}
+    \label{fig:shapiq_graph_compare}
+\end{figure}
+
+\subsection{Combined causal and clinical contextualization}
+\label{sec:domain_knowledge}
+Figure~\ref{fig:domain_knowledge_visual} shows the final explanatory model in plain clinical language. It links observed model signals (blue) to organ-system mechanisms (orange) and then to the outcome interpretation (green). This representation is generated from the same SHAP/\texttt{shapiq} evidence used earlier, so the explanation stays connected to quantitative model behavior.
+
+In practice, this layer makes the results easier to review: clinicians can inspect both the mechanism-level story and the underlying evidence (feature magnitudes, interaction strengths, and cohort contrasts). We found a coherent flow from baseline risk to organ dysfunction and treatment intensity, supporting clinically plausible hypothesis generation while avoiding over-interpretation \cite{doshi2017towards,arrieta2020explainable,prosperi2020causal,janzing2020feature}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{ishap_causal_context_explanation.png}
+    \caption{Clinician-oriented organ-system model. Blue nodes show observed model signals (with representative feature mappings), orange nodes show human organ-system pathways (immune, cardiovascular, renal, respiratory, neurological, musculoskeletal), and green is the final mortality-risk explanation.}
+    \label{fig:domain_knowledge_visual}
+\end{figure}
+
+
+\section{Discussion}
+
+The two iSHAP applications---synthetic cohorts for joint SHAP/\texttt{shapiq} analysis and a unified causal-contextual layer---form one auditable explanation loop. This design addresses a practical gap in clinical XAI: marginal importance alone is often insufficient for high-stakes interpretation, while interaction-only views can be difficult to contextualize for clinical use \cite{arrieta2020explainable,doshi2017towards}. By placing TreeSHAP, \texttt{shapiq}, and tier-constrained attribution in the same pipeline, iSHAP makes disagreement between explanation views explicit rather than hidden.
+
+From a methodological perspective, iSHAP operationalizes a causal-hypothesis workflow on top of observational attributions. Instead of claiming causal identification, we use domain-grounded LLM synthesis as a disciplined hypothesis layer over SHAP/\texttt{shapiq} evidence. This framing is aligned with current recommendations that stress the distinction between predictive associations and intervention-valid causal effects in healthcare ML \cite{janzing2020feature,prosperi2020causal}. In practice, this distinction helps separate likely upstream severity drivers from downstream treatment proxies.
+
+The synthetic profile component also contributes beyond data augmentation narratives. Here, synthetic rows are not used to retrain the predictor; they are used as a controlled evaluation scaffold that stress-tests explanatory behavior under clinically coherent perturbations. This allows targeted probing of fragile explanation regions (for example, false-positive and false-negative archetypes) while preserving a transparent link to observed training distributions \cite{tornqvist2024text,smolyak2024large}. A second practical use case is rare-clinical-case simulation: profile templates can deliberately instantiate underrepresented but clinically important scenarios (e.g., uncommon comorbidity-treatment combinations) that are too sparse in routine training cohorts, enabling explicit stress tests of model behavior and explanation stability before deployment. More broadly, this supports the goal of explanation robustness auditing emphasized in contemporary interpretability research \cite{molnar2022interpretable,watson2022rational,verma2024counterfactual}.
+
+Several limitations remain. First, LLM-elicited causal hypotheses and profile templates can encode prior bias or omit latent confounders. Second, the current evaluation is single-dataset and single-outcome; generalization across institutions, tasks, and shifts in care practice remains to be tested. Future work should include clinician-in-the-loop adjudication of causal hypotheses, external validation across health systems, uncertainty quantification for causal narratives, and integration of richer $do$-style attribution estimands when structural models are available \cite{parafita2025doshapley,carloni2025role}. An additional direction is a closed feedback loop in which iSHAP outputs inform subsequent training cycles: interaction instabilities and hypothesis violations can be used to set model constraints, tune hyperparameters, and prioritize targeted data augmentation so that calibration and generalization improve iteratively across re-training rounds.
+
+iSHAP provides a practical, domain-grounded protocol for explainability by combining two innovations in one auditable flow: (i) realistic synthetic profile generation to obtain more faithful SHAP and \texttt{shapiq} signals under domain-consistent feature distributions, and (ii) LLM- and domain-knowledge-guided causal hypothesis generation that is translated into a unified explanatory model of relevant features and mechanisms. The framework is not specific to medicine; it is applicable to any tabular domain where interaction effects, confounding structure, and interpretability constraints matter. We focus on healthcare because it is a high-stakes setting where transparent reasoning is essential, and in this context iSHAP yields explanations that are more clinically interpretable, more robust to hidden interaction effects, and better aligned with responsible ML deployment \cite{arrieta2020explainable}.
+
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
