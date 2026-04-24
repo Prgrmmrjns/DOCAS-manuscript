@@ -1,10 +1,8 @@
 numpy
 pandas
 scikit-learn
+lightgbm
+optuna
 shap
 matplotlib
-pyyaml
-python-dotenv
-mistralai
 networkx
-shapiq

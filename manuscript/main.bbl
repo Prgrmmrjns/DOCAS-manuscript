@@ -5,15 +5,40 @@ Alejandro~Barredo Arrieta, Natalia D{\'\i}az-Rodr{\'\i}guez, Javier Del~Ser, Adr
 \newblock Explainable artificial intelligence (xai): Concepts, taxonomies, opportunities and challenges toward responsible ai.
 \newblock {\em Information Fusion}, 58:82--115, 2020.
 
-\bibitem{rane2023explainable}
-N~Rane, S~Choudhary, and J~Rane.
-\newblock Explainable artificial intelligence (xai) in healthcare: interpretable models for clinical decision support.
-\newblock {\em SSRN Electronic Journal}, 2023.
+\bibitem{collins2015tripod}
+Gary~S Collins, Johannes~B Reitsma, Douglas~G Altman, and Karel~GM Moons.
+\newblock Transparent reporting of a multivariable prediction model for individual prognosis or diagnosis ({TRIPOD}): the {TRIPOD} statement.
+\newblock {\em BMJ}, 350:g7594, 2015.
 
-\bibitem{ghanvatkar2024evaluating}
-S~Ghanvatkar and V~Rajan.
-\newblock Evaluating explanations from ai algorithms for clinical decision-making: a social science-based approach.
-\newblock {\em IEEE Access}, 2024.
+\bibitem{prosperi2020causal}
+Mattia Prosperi, Yi~Guo, Matt Sperrin, James~S. Koopman, Jae~S. Min, Xing He, Shannan Rich, Mo~Wang, Emily~J. Atkins, Michael Prins, et~al.
+\newblock Causal inference and counterfactual prediction in machine learning for actionable healthcare.
+\newblock {\em Nature Machine Intelligence}, 2:369--375, 2020.
+
+\bibitem{geirhos2020shortcut}
+Robert Geirhos, J{\"o}rn-Henrik Jacobsen, Claudio Michaelis, Richard Zemel, Wieland Brendel, Matthias Bethge, and Felix~A Wichmann.
+\newblock Shortcut learning in deep neural networks.
+\newblock {\em Nature Machine Intelligence}, 2(11):665--673, 2020.
+
+\bibitem{carloni2025role}
+G~Carloni, A~Berti, and S~Colantonio.
+\newblock The role of causality in explainable artificial intelligence.
+\newblock {\em WIREs Data Mining and Knowledge Discovery}, 2025.
+
+\bibitem{janzing2020feature}
+Dominik Janzing, Lenon Minorics, and Patrick Bl{\"o}baum.
+\newblock Feature relevance quantification in explainable ai: A causal problem.
+\newblock In {\em International Conference on Artificial Intelligence and Statistics}, pages 2907--2916. PMLR, 2020.
+
+\bibitem{doshi2017towards}
+Finale Doshi-Velez and Been Kim.
+\newblock Towards a rigorous science of interpretable machine learning.
+\newblock {\em arXiv preprint arXiv:1702.08608}, 2017.
+
+\bibitem{molnar2022interpretable}
+Christoph Molnar.
+\newblock {\em Interpretable Machine Learning}.
+\newblock Lulu.com, 2 edition, 2022.
 
 \bibitem{lundberg2017unified}
 Scott~M. Lundberg and Su-In Lee.
@@ -25,64 +50,35 @@ Kjersti Aas, Martin Jullum, and Anders L{\o}land.
 \newblock Explaining individual predictions when features are dependent: More accurate approximations to shapley values.
 \newblock {\em Artificial Intelligence}, 298:103502, 2021.
 
-\bibitem{janzing2020feature}
-Dominik Janzing, Lenon Minorics, and Patrick Bl{\"o}baum.
-\newblock Feature relevance quantification in explainable ai: A causal problem.
-\newblock In {\em International Conference on Artificial Intelligence and Statistics}, pages 2907--2916. PMLR, 2020.
+\bibitem{heskes2020causal}
+Tom Heskes, Evi Sijben, Ioan~Gabriel Bucur, and Tom Claassen.
+\newblock Causal shapley values: Exploiting causal knowledge to explain individual predictions of complex models.
+\newblock In {\em Advances in Neural Information Processing Systems}, volume~33, pages 4778--4789, 2020.
 
-\bibitem{molnar2022interpretable}
-Christoph Molnar.
-\newblock {\em Interpretable Machine Learning}.
-\newblock Lulu.com, 2 edition, 2022.
+\bibitem{frye2020asymmetric}
+Christopher Frye, Colin Rowat, and Ilya Feige.
+\newblock Asymmetric shapley values: incorporating causal knowledge into model-agnostic explainability.
+\newblock In {\em Advances in Neural Information Processing Systems}, volume~33, pages 1229--1239, 2020.
 
-\bibitem{doshi2017towards}
-Finale Doshi-Velez and Been Kim.
-\newblock Towards a rigorous science of interpretable machine learning.
-\newblock {\em arXiv preprint arXiv:1702.08608}, 2017.
+\bibitem{ng2025causalshap}
+Wei~Yang Ng, Ling~Ruo Wang, Shuai Liu, and Xiuchao Fan.
+\newblock Causal shap: Feature attribution with dependency awareness through causal discovery.
+\newblock {\em IEEE Transactions on Knowledge and Data Engineering}, 2025.
 
-\bibitem{muschalik2024shapiq}
-Maximilian Muschalik, Hubert Baniecki, Fabian Fumagalli, Patrick Kolpaczki, Barbara Hammer, and Eyke H{\"u}llermeier.
-\newblock shapiq: Shapley interactions for machine learning.
-\newblock {\em Advances in Neural Information Processing Systems}, 37:130324--130357, 2024.
+\bibitem{fang2024llmsontabular}
+Xi~Fang, Weijie Xu, Fiona~Anting Tan, Ziqing Hu, Jiani Zhang, Yanjun Qi, Srinivasan~H. Sengamedu, and Christos Faloutsos.
+\newblock Large language models ({LLMs}) on tabular data: Prediction, generation, and understanding---a survey.
+\newblock {\em Transactions on Machine Learning Research}, 2024.
+\newblock arXiv:2402.17944.
 
-\bibitem{carloni2025role}
-G~Carloni, A~Berti, and S~Colantonio.
-\newblock The role of causality in explainable artificial intelligence.
-\newblock {\em WIREs Data Mining and Knowledge Discovery}, 2025.
+\bibitem{zhao2024explainabilityllmsurvey}
+Haomin Zhao, Haibo Chen, Fan Yang, Ning Liu, Haolin Deng, and Hao Cai.
+\newblock Explainability for large language models: A survey.
+\newblock {\em ACM Computing Surveys}, 2024.
 
-\bibitem{tornqvist2024text}
-M~T{\"o}rnqvist, JD~Zucker, and T~Fauvel.
-\newblock A text-to-tabular approach to generate synthetic patient data using llms.
-\newblock {\em arXiv preprint arXiv:2412.05153}, 2024.
-
-\bibitem{smolyak2024large}
-D~Smolyak, MV~Bjarnad{\'o}ttir, and K~Crowley.
-\newblock Large language models and synthetic health data: progress and prospects.
-\newblock {\em JAMIA Open}, 7(4):ooae114, 2024.
-
-\bibitem{cappuccio2025integrating}
-E~Cappuccio, B~Kathirgamanathan, and S~Rinzivillo.
-\newblock Integrating human knowledge for explainable ai.
-\newblock {\em Machine Learning}, 2025.
-
-\bibitem{prosperi2020causal}
-Mattia Prosperi, Yi~Guo, Matt Sperrin, James~S. Koopman, Jae~S. Min, Xing He, Shannan Rich, Mo~Wang, Emily~J. Atkins, Michael Prins, et~al.
-\newblock Causal inference and counterfactual prediction in machine learning for actionable healthcare.
-\newblock {\em Nature Machine Intelligence}, 2:369--375, 2020.
-
-\bibitem{watson2022rational}
-David~S. Watson.
-\newblock Rational shapley values.
-\newblock In {\em ACM Conference on Fairness, Accountability, and Transparency (FAccT)}, pages 1083--1094, 2022.
-
-\bibitem{verma2024counterfactual}
-Sahil Verma, Varich Boonsanong, Minh Hoang, Keegan~E. Hines, John~P. Dickerson, and Chirag Shah.
-\newblock Counterfactual explanations and algorithmic recourses for machine learning: A review.
-\newblock {\em ACM Computing Surveys}, 56(12):1--42, 2024.
-
-\bibitem{parafita2025doshapley}
-{\'A}lvaro Parafita, Toni Garriga, Axel Brando, and Francisco~Javier Cazorla.
-\newblock Practical do-shapley explanations with estimand-agnostic causal inference.
-\newblock {\em arXiv preprint arXiv:2509.20211}, 2025.
+\bibitem{dubosson2018open}
+Fabien Dubosson, Jean-Eudes Ranvier, Stefano Bromuri, Jean-Paul Calbimonte, Juan Ruiz, and Michael Schumacher.
+\newblock The open {D1NAMO} dataset: A multi-modal dataset for research on non-invasive type 1 diabetes management.
+\newblock {\em Informatics in Medicine Unlocked}, 13:92--100, 2018.
 
 \end{thebibliography}

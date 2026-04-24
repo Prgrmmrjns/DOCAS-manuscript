@@ -1,14 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1774968564.5211 "main.aux" "main.bbl" "main" 1774968574.3309 0
-  "./references.bib" 1774962023.94481 6625 0cf5197df43bebf77c1134242fe19c4a ""
+["bibtex main"] 0 "main.aux" "main.bbl" "main" 0 -1
+  "./references.bib" 1776759765.3139 10330 6b681146df42e2dc706bdd5558b8b3bc ""
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/base/unsrt.bst" 1292289607 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "main.aux" 1774968574.02791 7038 a56d254acde2b555f9a3756205b4efc0 "pdflatex"
+  "main.aux" 1776965843.8988 5729 ac6d6c23eab8fe4bc6de8f1aaeccb6eb "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1774968564.63232 "/Users/jwolber/Documents/iSHAP/manuscript/main.tex" "main.pdf" "main" 1774968574.33109 0
-  "/Users/jwolber/Documents/iSHAP/manuscript/main.tex" 1774968554.47411 18638 f9eec8cb3773063638d402215516efdd ""
+["pdflatex"] 1776965842.8872 "main.tex" "main.pdf" "main" 1776965844.28732 2
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1136849721 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -42,7 +41,9 @@
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb" 1215737283 169201 9ebf99020dde51a5086e186761a34e8f ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/txfonts/rtxmi.pfb" 1232065820 13806 49b888f4605a088e66b9eb4fee320a6e ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/txfonts/rtxr.pfb" 1136849748 6339 e2b78706efdc360ee6aec9b6e20211a7 ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/txfonts/txex.pfb" 1136849748 17531 c91f2d6943f51d7c46d6b7b9cedd50ba ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/txfonts/txsy.pfb" 1136849748 20336 69267d8a81bca8b24c9b42694a4a28f9 ""
+  "/usr/local/texlive/2024/texmf-dist/fonts/type1/public/txfonts/txsyc.pfb" 1136849748 27693 bfb340b71292c6ead561e4943433945d ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb" 1136849748 44729 811d6c62865936705a31c797a1d5dada ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb" 1136849748 46026 6dab18b61c907687b520c72847215a68 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb" 1136849748 45458 a3faba884469519614ca56ba5f6b1de1 ""
@@ -150,16 +151,14 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1726666916.18357 5467645 128b85b7cde5f5edc5cb7f1dd7ff8736 ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1726666844 8221429 383b26a9af32fc3d743cdd4c2bdcadfe ""
   "/usr/local/texlive/2024/texmf.cnf" 1710266656 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "ishap_causal_context_explanation.png" 1774963169.00948 3271849 b368e1d19dc53be41a534555035d82fc ""
-  "ishap_synthetic_pipeline.png" 1774964351.04744 226464 aa480070697b8ad37336ad91fd4b2d4c ""
-  "main.aux" 1774968574.02791 7038 a56d254acde2b555f9a3756205b4efc0 "pdflatex"
-  "main.bbl" 1774968564.6294 4169 adbb01aa435012458a5b1ab361890913 "bibtex main"
-  "main.out" 1774968574.02904 1398 4fe9ec3afada96fb5514da46639a8c60 "pdflatex"
-  "main.spl" 1774968564.8667 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "main.tex" 1774968554.47411 18638 f9eec8cb3773063638d402215516efdd ""
-  "mimic_shap_vs_ishap_beeswarm.png" 1774967719.48089 687035 5b1814caa6ecfe34fcc75fa619179e4a ""
-  "mimic_shapiq_interactions_graph.png" 1774967134.11173 729626 af8fe3daaef82c557805fd515f0f68ba ""
-  "table_profiles.tex" 1774963928.03859 1489 8c662352b287cc9b03988f3527f2c5f8 ""
+  "images/d1namo_scm_dag.png" 1776951695.12757 114712 981045f2af6663bf0aa0787e7548a78e ""
+  "images/d1namo_shap_before_after.png" 0 -1 0 ""
+  "images/shapprop_algorithm_flowchart.png" 1776874824.62341 282419 d741c5eca3d1e4d80cff2efb8a4bd2ca ""
+  "main.aux" 1776965843.8988 5729 ac6d6c23eab8fe4bc6de8f1aaeccb6eb "pdflatex"
+  "main.bbl" 1776933040.8197 4409 6d4e0157659f5d18130d44db86ae2a58 "bibtex main"
+  "main.out" 1776965843.89976 1385 51a379cc33c4332ee4c0ed390a07304e "pdflatex"
+  "main.spl" 1776965843.12623 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "main.tex" 1776965833.01507 13934 e6e49881095539cc0f85e4ac94722e33 ""
   (generated)
   "main.aux"
   "main.log"

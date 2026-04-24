@@ -1,31 +1,34 @@
-# iSHAP (Informed SHAP) - Research Repo
+# iSHAP / SHAPPROP
 
-This is the research repo for the iSHAP paper. The goal is to extend the SHAP framework to be more grounded in domain knowledge thus giving more realistic feature contributions
-and then leveraging the SHAP and shapiq findings to generate an explanatory model.
-The hypothesis is that LLMs can integrate domain knowledge into post-hoc explanation methods for more realistic and 
-grounded explanations which then helps in clinical decision support and scientific discovery.
+NSGA-II over **custom LightGBM objectives** (covariance bias toward a sign prior) vs. held-out **performance** (RMSE / ROC-AUC) and **feasibility** from `pred_contrib` means.
 
-## Current To Dos
+## Setup
 
-[ ] Validate the evaluation pipeline on other datasets 
-[ ] Validate the evaluation pipeline on other models
-[ ] Improve synthetic cohort generation
-[ ] Integrate causal hypothesis generalization
-[ ] Experiment with agentic workflows
+```bash
+pip install -r requirements.txt
+```
 
-## Project Layout
+## Data (repo root)
 
-- `scripts/`: Python scripts for preprocessing datasets, ishap functionality, and evaluation pipeline.
-- `manuscript/`: LaTeX manuscript for the iSHAP paper.
-- `results/`: Evaluation pipeline results.
+| File | Module |
+|------|--------|
+| `d1namo_combined.csv` | `d1namo` |
+| `heart_disease.csv` | `heart_disease` |
+| `cancer_risk_factors.csv` | `cancer_risk` |
 
-## Quick Start for running evaluation pipeline
+## Run
 
-1. Install dependencies:
+```bash
+python scripts/main.py
+```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+Writes `results/shapprop_run.json`. Edit `Settings` in `scripts/main.py` for `datasets`, `n_trials`, etc.
 
-2. Make a Mistral account. Put your API key in the `.env` file as MISTRAL_API_KEY.
-3. Run scripts/run_mimic_ishap.py for the evaluation pipeline.
+## Layout
+
+- `scripts/main.py` — Optuna NSGA-II, refit custom vs default objective, reports.
+- `scripts/lib.py` — train/test split, feasibility score.
+- `scripts/objkit.py` — shared MSE / logistic + sign-penalty objective factory.
+- `scripts/backend_lightgbm.py` — LightGBM fit + `pred_contrib` summary.
+- `scripts/<dataset>.py` — `load(project_root) -> (X, y)`; `TASK`, `NAME`.
+- `scripts/objectives/<dataset>.py` — `SIGNS` / `WORLD_MODEL`, `suggest_params`, `make_objective`.

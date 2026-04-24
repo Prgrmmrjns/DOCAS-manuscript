@@ -3,67 +3,55 @@
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \providecommand \oddpage@label [2]{}
-\citation{arrieta2020explainable}
-\citation{rane2023explainable,ghanvatkar2024evaluating}
+\citation{arrieta2020explainable,collins2015tripod}
+\citation{prosperi2020causal}
+\citation{geirhos2020shortcut}
+\citation{prosperi2020causal,carloni2025role}
+\citation{janzing2020feature,doshi2017towards,molnar2022interpretable}
 \citation{lundberg2017unified}
-\citation{aas2021explaining,janzing2020feature,molnar2022interpretable}
-\citation{doshi2017towards}
-\citation{muschalik2024shapiq}
-\citation{carloni2025role}
-\citation{tornqvist2024text,smolyak2024large}
-\citation{cappuccio2025integrating}
+\citation{aas2021explaining}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Methods}{5}{section.2}\protected@file@percent }
-\newlabel{sec:methods}{{2}{5}{Methods}{section.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Study design and pipeline}{5}{subsection.2.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces iSHAP profile-generation pipeline. Real MIMIC-IV features train a LightGBM classifier; three model summaries (SHAP context, task descriptor, prediction audit) are passed to the LLM, which emits 10 targeted profile templates. Each template applies bias functions to real training rows to produce $\approx $1,000 schema-aligned synthetic rows for the TreeSHAP and \texttt  {shapiq} comparison.}}{6}{figure.caption.1}\protected@file@percent }
+\citation{heskes2020causal,frye2020asymmetric,carloni2025role,ng2025causalshap}
+\citation{fang2024llmsontabular,zhao2024explainabilityllmsurvey}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Methods}{4}{section.2}\protected@file@percent }
+\newlabel{sec:methods}{{2}{4}{Methods}{section.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces High-level orchestration: standard {LightGBM} regression on scaled targets with early stopping on real validation rows; {Optuna} {TPE} proposes {SCM} sampling and label-push parameters; feasibility is evaluated post-hoc from {SHAP} against declared rules. Source vector: \texttt  {images/shapprop\_algorithm\_flowchart.svg}.}}{4}{figure.caption.4}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:synthetic_pipeline}{{1}{6}{iSHAP profile-generation pipeline. Real MIMIC-IV features train a LightGBM classifier; three model summaries (SHAP context, task descriptor, prediction audit) are passed to the LLM, which emits 10 targeted profile templates. Each template applies bias functions to real training rows to produce $\approx $1,000 schema-aligned synthetic rows for the TreeSHAP and \texttt {shapiq} comparison}{figure.caption.1}{}}
-\citation{arrieta2020explainable,prosperi2020causal}
-\citation{muschalik2024shapiq}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces The 10 LLM-generated clinical profiles with representative bias functions.}}{7}{table.caption.2}\protected@file@percent }
-\newlabel{tab:profiles}{{1}{7}{The 10 LLM-generated clinical profiles with representative bias functions}{table.caption.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Single causal-contextual application}{7}{subsection.2.2}\protected@file@percent }
-\newlabel{sec:causal_context_method}{{2.2}{7}{Single causal-contextual application}{subsection.2.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Results}{8}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}SHAP and shapiq on the synthetic profile cohort}{8}{subsection.3.1}\protected@file@percent }
-\newlabel{sec:results_shapiq}{{3.1}{8}{SHAP and shapiq on the synthetic profile cohort}{subsection.3.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Default SHAP vs. iSHAP explanation error (SHAP benchmark style; prediction scale: raw score).}}{8}{table.caption.3}\protected@file@percent }
-\newlabel{tab:shap_error_comparison}{{2}{8}{Default SHAP vs. iSHAP explanation error (SHAP benchmark style; prediction scale: raw score)}{table.caption.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Same LightGBM model; \textbf  {left:} informed SHAP baseline (TreeSHAP with background on held-out rows); \textbf  {right:} TreeSHAP on the synthetic profile cohort (Figure~\ref {fig:synthetic_pipeline}).}}{9}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:shap_beeswarm_compare}{{2}{9}{Same LightGBM model; \textbf {left:} informed SHAP baseline (TreeSHAP with background on held-out rows); \textbf {right:} TreeSHAP on the synthetic profile cohort (Figure~\ref {fig:synthetic_pipeline})}{figure.caption.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \texttt  {shapiq} interaction graphs for the same two regimes (held-out vs.\ profile cohort). Node size $\propto $ marginal SHAP mass; edge width $\propto $ mean $|\text  {pairwise interaction}|$; only the top-15 interactions per panel are shown.}}{9}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:shapiq_graph_compare}{{3}{9}{\texttt {shapiq} interaction graphs for the same two regimes (held-out vs.\ profile cohort). Node size $\propto $ marginal SHAP mass; edge width $\propto $ mean $|\text {pairwise interaction}|$; only the top-15 interactions per panel are shown}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Combined causal and clinical contextualization}{9}{subsection.3.2}\protected@file@percent }
-\newlabel{sec:domain_knowledge}{{3.2}{9}{Combined causal and clinical contextualization}{subsection.3.2}{}}
-\citation{doshi2017towards,arrieta2020explainable,prosperi2020causal,janzing2020feature}
-\citation{arrieta2020explainable,doshi2017towards}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Clinician-oriented organ-system model. Blue nodes show observed model signals (with representative feature mappings), orange nodes show human organ-system pathways (immune, cardiovascular, renal, respiratory, neurological, musculoskeletal), and green is the final mortality-risk explanation.}}{10}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:domain_knowledge_visual}{{4}{10}{Clinician-oriented organ-system model. Blue nodes show observed model signals (with representative feature mappings), orange nodes show human organ-system pathways (immune, cardiovascular, renal, respiratory, neurological, musculoskeletal), and green is the final mortality-risk explanation}{figure.caption.6}{}}
-\citation{janzing2020feature,prosperi2020causal}
-\citation{tornqvist2024text,smolyak2024large}
-\citation{molnar2022interpretable,watson2022rational,verma2024counterfactual}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Discussion}{11}{section.4}\protected@file@percent }
-\citation{parafita2025doshapley,carloni2025role}
-\citation{arrieta2020explainable}
+\newlabel{fig:shapprop_algorithm}{{1}{4}{High-level orchestration: standard {LightGBM} regression on scaled targets with early stopping on real validation rows; {Optuna} {TPE} proposes {SCM} sampling and label-push parameters; feasibility is evaluated post-hoc from {SHAP} against declared rules. Source vector: \texttt {images/shapprop\_algorithm\_flowchart.svg}}{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces {D1NAMO} {SCM} prior: \texttt  {d1namo.SCM\_RULES} lists weighted directed edges (feature$\rightarrow $feature structure and optional edges into \emph  {future glucose}). \texttt  {export\_scm\_dag\_dot} in \texttt  {scripts/visuals.py} writes \texttt  {images/d1namo\_scm\_graph.dot}; render to {PNG} for the manuscript.}}{5}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:d1namo_causal}{{2}{5}{{D1NAMO} {SCM} prior: \texttt {d1namo.SCM\_RULES} lists weighted directed edges (feature$\rightarrow $feature structure and optional edges into \emph {future glucose}). \texttt {export\_scm\_dag\_dot} in \texttt {scripts/visuals.py} writes \texttt {images/d1namo\_scm\_graph.dot}; render to {PNG} for the manuscript}{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Validation explanations before vs.\ after augmentation: {SHAP} bee-swarm columns and a {ShapIQ} second-order interaction graph on a fixed validation subsample (\texttt  {scripts/visuals.py}).}}{6}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:d1namo_shap}{{3}{6}{Validation explanations before vs.\ after augmentation: {SHAP} bee-swarm columns and a {ShapIQ} second-order interaction graph on a fixed validation subsample (\texttt {scripts/visuals.py})}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Pipeline}{6}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}{D1NAMO}: {SCM}-guided synthetic augmentation}{7}{subsection.2.2}\protected@file@percent }
+\newlabel{sec:d1namo_synth}{{2.2}{7}{{D1NAMO}: {SCM}-guided synthetic augmentation}{subsection.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Composite {TPE} objective}{8}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Feasibility scoring}{8}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Data and domain priors}{8}{subsection.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{{D1NAMO} (regression).}{8}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Evaluation protocol}{9}{subsection.2.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Results}{9}{section.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces {D1NAMO} run summary (fill from console output / \texttt  {results/d1namo\_shap\_feasibility.json} after \texttt  {python scripts/main.py}).}}{9}{table.caption.8}\protected@file@percent }
+\newlabel{tab:shapprop_main}{{1}{9}{{D1NAMO} run summary (fill from console output / \texttt {results/d1namo\_shap\_feasibility.json} after \texttt {python scripts/main.py})}{table.caption.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{{D1NAMO}.}{9}{section*.9}\protected@file@percent }
 \bibstyle{unsrt}
 \bibdata{references}
 \bibcite{arrieta2020explainable}{{1}{}{{}}{{}}}
-\bibcite{rane2023explainable}{{2}{}{{}}{{}}}
-\bibcite{ghanvatkar2024evaluating}{{3}{}{{}}{{}}}
-\bibcite{lundberg2017unified}{{4}{}{{}}{{}}}
-\bibcite{aas2021explaining}{{5}{}{{}}{{}}}
+\bibcite{collins2015tripod}{{2}{}{{}}{{}}}
+\bibcite{prosperi2020causal}{{3}{}{{}}{{}}}
+\bibcite{geirhos2020shortcut}{{4}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Discussion}{10}{section.4}\protected@file@percent }
+\bibcite{carloni2025role}{{5}{}{{}}{{}}}
 \bibcite{janzing2020feature}{{6}{}{{}}{{}}}
-\bibcite{molnar2022interpretable}{{7}{}{{}}{{}}}
-\bibcite{doshi2017towards}{{8}{}{{}}{{}}}
-\bibcite{muschalik2024shapiq}{{9}{}{{}}{{}}}
-\bibcite{carloni2025role}{{10}{}{{}}{{}}}
-\bibcite{tornqvist2024text}{{11}{}{{}}{{}}}
-\bibcite{smolyak2024large}{{12}{}{{}}{{}}}
-\bibcite{cappuccio2025integrating}{{13}{}{{}}{{}}}
-\bibcite{prosperi2020causal}{{14}{}{{}}{{}}}
-\bibcite{watson2022rational}{{15}{}{{}}{{}}}
-\bibcite{verma2024counterfactual}{{16}{}{{}}{{}}}
-\bibcite{parafita2025doshapley}{{17}{}{{}}{{}}}
+\bibcite{doshi2017towards}{{7}{}{{}}{{}}}
+\bibcite{molnar2022interpretable}{{8}{}{{}}{{}}}
+\bibcite{lundberg2017unified}{{9}{}{{}}{{}}}
+\bibcite{aas2021explaining}{{10}{}{{}}{{}}}
+\bibcite{heskes2020causal}{{11}{}{{}}{{}}}
+\bibcite{frye2020asymmetric}{{12}{}{{}}{{}}}
+\bibcite{ng2025causalshap}{{13}{}{{}}{{}}}
+\bibcite{fang2024llmsontabular}{{14}{}{{}}{{}}}
+\bibcite{zhao2024explainabilityllmsurvey}{{15}{}{{}}{{}}}
+\bibcite{dubosson2018open}{{16}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{15}
+\gdef \@abspage@last{12}

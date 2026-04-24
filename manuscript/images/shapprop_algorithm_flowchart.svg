@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 780" width="960" height="780">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#334155"/>
+    </marker>
+
+    <symbol id="ic-table" viewBox="0 0 48 48">
+      <rect x="4" y="6" width="40" height="36" rx="4" fill="#eff6ff" stroke="#1e3a8a" stroke-width="1.6"/>
+      <line x1="4" y1="16" x2="44" y2="16" stroke="#1e3a8a" stroke-width="1.4"/>
+      <line x1="4" y1="26" x2="44" y2="26" stroke="#1e3a8a" stroke-width="1.2"/>
+      <line x1="4" y1="34" x2="44" y2="34" stroke="#1e3a8a" stroke-width="1.2"/>
+      <line x1="18" y1="6"  x2="18" y2="42" stroke="#1e3a8a" stroke-width="1.2"/>
+      <line x1="30" y1="6"  x2="30" y2="42" stroke="#1e3a8a" stroke-width="1.2"/>
+    </symbol>
+
+    <symbol id="ic-arrows" viewBox="0 0 48 48">
+      <rect x="3" y="3" width="42" height="42" rx="6" fill="#ecfeff" stroke="#0e7490" stroke-width="1.6"/>
+      <path d="M10,16 L34,16" stroke="#0e7490" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M34,16 L28,10 M34,16 L28,22" stroke="#0e7490" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M38,32 L14,32" stroke="#b91c1c" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M14,32 L20,26 M14,32 L20,38" stroke="#b91c1c" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </symbol>
+
+    <symbol id="ic-tree" viewBox="0 0 48 48">
+      <rect x="3" y="3" width="42" height="42" rx="6" fill="#ecfdf5" stroke="#065f46" stroke-width="1.6"/>
+      <circle cx="24" cy="12" r="3" fill="#065f46"/>
+      <circle cx="14" cy="24" r="3" fill="#065f46"/>
+      <circle cx="34" cy="24" r="3" fill="#065f46"/>
+      <circle cx="10" cy="36" r="2.6" fill="#10b981"/>
+      <circle cx="18" cy="36" r="2.6" fill="#10b981"/>
+      <circle cx="30" cy="36" r="2.6" fill="#10b981"/>
+      <circle cx="38" cy="36" r="2.6" fill="#10b981"/>
+      <line x1="24" y1="12" x2="14" y2="24" stroke="#065f46" stroke-width="1.6"/>
+      <line x1="24" y1="12" x2="34" y2="24" stroke="#065f46" stroke-width="1.6"/>
+      <line x1="14" y1="24" x2="10" y2="36" stroke="#065f46" stroke-width="1.4"/>
+      <line x1="14" y1="24" x2="18" y2="36" stroke="#065f46" stroke-width="1.4"/>
+      <line x1="34" y1="24" x2="30" y2="36" stroke="#065f46" stroke-width="1.4"/>
+      <line x1="34" y1="24" x2="38" y2="36" stroke="#065f46" stroke-width="1.4"/>
+    </symbol>
+
+    <symbol id="ic-sliders" viewBox="0 0 48 48">
+      <rect x="3" y="3" width="42" height="42" rx="6" fill="#fdf4ff" stroke="#a21caf" stroke-width="1.6"/>
+      <line x1="10" y1="16" x2="38" y2="16" stroke="#a21caf" stroke-width="2"/>
+      <circle cx="28" cy="16" r="4" fill="#d946ef"/>
+      <line x1="10" y1="24" x2="38" y2="24" stroke="#a21caf" stroke-width="2"/>
+      <circle cx="18" cy="24" r="4" fill="#d946ef"/>
+      <line x1="10" y1="32" x2="38" y2="32" stroke="#a21caf" stroke-width="2"/>
+      <circle cx="32" cy="32" r="4" fill="#d946ef"/>
+    </symbol>
+
+    <symbol id="ic-synth" viewBox="0 0 48 48">
+      <rect x="3" y="3" width="42" height="42" rx="6" fill="#fffbeb" stroke="#b45309" stroke-width="1.6"/>
+      <rect x="10" y="14" width="28" height="24" rx="2" fill="#fef3c7" stroke="#b45309" stroke-width="1.6"/>
+      <line x1="10" y1="22" x2="38" y2="22" stroke="#b45309" stroke-width="1.6"/>
+      <line x1="24" y1="14" x2="24" y2="38" stroke="#b45309" stroke-width="1.6"/>
+      <path d="M34,10 L36,4 L38,10 L44,12 L38,14 L36,20 L34,14 L28,12 Z" fill="#f59e0b"/>
+    </symbol>
+
+    <symbol id="ic-shap" viewBox="0 0 48 48">
+      <rect x="3" y="3" width="42" height="42" rx="6" fill="#f0fdf4" stroke="#047857" stroke-width="1.6"/>
+      <line x1="24" y1="10" x2="24" y2="38" stroke="#047857" stroke-width="1.2" stroke-dasharray="2 2"/>
+      <rect x="24" y="14" width="12" height="6" fill="#34d399"/>
+      <rect x="14" y="24" width="10" height="6" fill="#f87171"/>
+      <rect x="24" y="34" width="8" height="6" fill="#34d399"/>
+    </symbol>
+
+    <symbol id="ic-score" viewBox="0 0 48 48">
+      <rect x="3" y="3" width="42" height="42" rx="6" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.6"/>
+      <circle cx="24" cy="24" r="14" fill="none" stroke="#1d4ed8" stroke-width="1.6"/>
+      <circle cx="24" cy="24" r="8" fill="none" stroke="#1d4ed8" stroke-width="1.6"/>
+      <circle cx="24" cy="24" r="3" fill="#3b82f6"/>
+      <line x1="24" y1="10" x2="24" y2="4" stroke="#1d4ed8" stroke-width="1.6"/>
+      <line x1="24" y1="38" x2="24" y2="44" stroke="#1d4ed8" stroke-width="1.6"/>
+      <line x1="10" y1="24" x2="4" y2="24" stroke="#1d4ed8" stroke-width="1.6"/>
+      <line x1="38" y1="24" x2="44" y2="24" stroke="#1d4ed8" stroke-width="1.6"/>
+    </symbol>
+
+    <symbol id="ic-loop" viewBox="0 0 48 48">
+      <rect x="3" y="3" width="42" height="42" rx="6" fill="#fef2f2" stroke="#b91c1c" stroke-width="1.6"/>
+      <path d="M14,24 A10,10 0 0,1 32,16" fill="none" stroke="#ef4444" stroke-width="2.6"/>
+      <polygon points="32,12 36,18 30,20" fill="#ef4444"/>
+      <path d="M34,24 A10,10 0 0,1 16,32" fill="none" stroke="#ef4444" stroke-width="2.6"/>
+      <polygon points="16,36 12,30 18,28" fill="#ef4444"/>
+    </symbol>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#fafafa"/>
+
+  <!-- STEP 1: dataset -->
+  <g>
+    <rect x="60" y="30" width="840" height="100" rx="14" fill="#eff6ff" stroke="#1e3a8a" stroke-width="1.4"/>
+    <use href="#ic-table" x="86" y="46" width="68" height="68"/>
+    <text x="180" y="62" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" fill="#1e3a8a">1 · Dataset</text>
+    <text x="180" y="86" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#1e3a8a">tabular features X, numeric target y</text>
+    <text x="180" y="106" font-family="Arial,Helvetica,sans-serif" font-size="12.5" fill="#475569" font-style="italic">example: D1NAMO free-living type-1 diabetes — 60-minute glycemic change</text>
+  </g>
+  <line x1="480" y1="130" x2="480" y2="162" stroke="#334155" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+  <!-- STEP 2: signed prior -->
+  <g>
+    <rect x="60" y="162" width="840" height="120" rx="14" fill="#ecfeff" stroke="#0e7490" stroke-width="1.4"/>
+    <use href="#ic-arrows" x="86" y="182" width="68" height="68"/>
+    <text x="180" y="200" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" fill="#0e7490">2 · Signed SCM (domain prior)</text>
+    <text x="180" y="222" font-family="Arial,Helvetica,sans-serif" font-size="13" fill="#0f172a">Sparse rules: feature→feature structure for synthetic rows; signed edges into target y</text>
+    <text x="180" y="242" font-family="Arial,Helvetica,sans-serif" font-size="12.5" fill="#0f172a">e.g. glucose ↑ y, insulin ↓ y, simple_sugars ↑ y; optional structural parents (e.g. fibers → sugars)</text>
+    <text x="180" y="262" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#475569" font-style="italic">weights |edge| drive both label rule-push and post-hoc Pearson alignment — no dataset-specific hooks in core loop</text>
+  </g>
+  <line x1="480" y1="282" x2="480" y2="314" stroke="#334155" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+  <!-- STEP 3: Optuna Loop -->
+  <g>
+    <rect x="60" y="314" width="840" height="380" rx="14" fill="#fff7ed" stroke="#b45309" stroke-width="1.4"/>
+    <use href="#ic-synth" x="86" y="336" width="48" height="48"/>
+    <text x="150" y="366" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" fill="#b45309">3 · SCM-guided synthetic search (Optuna TPE)</text>
+
+    <!-- Box 1: Propose -->
+    <g transform="translate(100, 400)">
+      <rect width="220" height="100" rx="8" fill="#ffffff" stroke="#a21caf" stroke-width="1.2"/>
+      <use href="#ic-sliders" x="12" y="12" width="32" height="32"/>
+      <text x="52" y="32" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#701a75">1. Propose sampler params</text>
+      <text x="16" y="60" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#4a044e">TPE suggests e.g. structural</text>
+      <text x="16" y="76" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#4a044e">noise, y residual band,</text>
+      <text x="16" y="92" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#4a044e">rule-push strength</text>
+    </g>
+
+    <!-- Box 2: Generate -->
+    <g transform="translate(370, 400)">
+      <rect width="220" height="100" rx="8" fill="#ffffff" stroke="#b45309" stroke-width="1.2"/>
+      <use href="#ic-synth" x="12" y="12" width="32" height="32"/>
+      <text x="52" y="32" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#7c2d12">2. Draw synthetic batch</text>
+      <text x="16" y="60" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#7c2d12">OLS modules along SCM</text>
+      <text x="16" y="76" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#7c2d12">order + shocks; y = head</text>
+      <text x="16" y="92" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#7c2d12">+ δ + rule-push Σ signed edges</text>
+    </g>
+
+    <!-- Box 3: Train -->
+    <g transform="translate(640, 400)">
+      <rect width="220" height="100" rx="8" fill="#ffffff" stroke="#065f46" stroke-width="1.2"/>
+      <use href="#ic-tree" x="12" y="12" width="32" height="32"/>
+      <text x="52" y="32" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#064e3b">3. Train + val RMSE</text>
+      <text x="16" y="60" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#064e3b">LightGBM on X_train ∪ X_s</text>
+      <text x="16" y="76" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#064e3b">(scaled y); early stop on</text>
+      <text x="16" y="92" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#064e3b">held-out real val rows only</text>
+    </g>
+
+    <!-- Box 4: Domain Pearson (SHAP) -->
+    <g transform="translate(640, 540)">
+      <rect width="220" height="100" rx="8" fill="#ffffff" stroke="#047857" stroke-width="1.2"/>
+      <use href="#ic-shap" x="12" y="12" width="32" height="32"/>
+      <text x="52" y="32" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#064e3b">4. Domain Pearson (SHAP)</text>
+      <text x="16" y="60" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#064e3b">TreeSHAP on val subsample</text>
+      <text x="16" y="76" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#064e3b">Per u→y rule: corr(SHAP_u,x_u)</text>
+      <text x="16" y="92" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#064e3b">vs sign(edge); |edge|-weighted mean → [0,1]</text>
+    </g>
+
+    <!-- Box 5: Score -->
+    <g transform="translate(370, 540)">
+      <rect width="220" height="100" rx="8" fill="#ffffff" stroke="#1d4ed8" stroke-width="1.2"/>
+      <use href="#ic-score" x="12" y="12" width="32" height="32"/>
+      <text x="52" y="32" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#1e3a8a">5. Composite objective</text>
+      <text x="16" y="60" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#1e3a8a">S = (1−w)·RMSE_quality</text>
+      <text x="16" y="76" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#1e3a8a">+ w · Pearson_01 (higher</text>
+      <text x="16" y="92" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#1e3a8a">better); TPE maximizes S</text>
+    </g>
+
+    <!-- Box 6: Append -->
+    <g transform="translate(100, 540)">
+      <rect width="220" height="100" rx="8" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+      <use href="#ic-loop" x="12" y="12" width="32" height="32"/>
+      <text x="52" y="32" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#7f1d1d">6. Select &amp; append</text>
+      <text x="16" y="60" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#7f1d1d">Re-score top-k trials with</text>
+      <text x="16" y="76" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#7f1d1d">same fit; accept batch if</text>
+      <text x="16" y="92" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#7f1d1d">S↑ &amp; val RMSE ≤ cap; refit SCM</text>
+    </g>
+
+    <!-- Arrows between boxes -->
+    <!-- 1 to 2 -->
+    <line x1="320" y1="450" x2="360" y2="450" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+    <!-- 2 to 3 -->
+    <line x1="590" y1="450" x2="630" y2="450" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+    <!-- 3 to 4 -->
+    <line x1="750" y1="500" x2="750" y2="530" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+    <!-- 4 to 5 -->
+    <line x1="640" y1="590" x2="600" y2="590" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+    <!-- 5 to 6 -->
+    <line x1="370" y1="590" x2="330" y2="590" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+    <!-- 6 to 1 -->
+    <line x1="210" y1="540" x2="210" y2="510" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+
+  </g>
+
+  <!-- Stop criterion (outside the main loop box) -->
+  <g>
+    <line x1="480" y1="640" x2="480" y2="716" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="380" y="716" width="200" height="36" rx="6" fill="#fef2f2" stroke="#b91c1c" stroke-width="1.6"/>
+    <text x="480" y="739" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#7f1d1d">Stop if no gain or RMSE over baseline cap</text>
+  </g>
+</svg>

@@ -1,0 +1,61 @@
+{
+  "dataset": "d1namo",
+  "target": "future glucose",
+  "rules": [
+    {
+      "start": "dietary_fibers",
+      "end": "simple_sugars",
+      "edge": -1.0
+    }
+  ],
+  "n_val": 1266,
+  "synth_batch_size": 64,
+  "synth_rows_added": 320,
+  "synth_params": {
+    "shap_struct_weight_power": 0.62,
+    "shap_leaf_noise_base": 0.09,
+    "shap_y_diversify": 0.24,
+    "shap_synth_guide_samples": 512,
+    "y_label_head_anchor": 0.08,
+    "steer_rule_feature": "insulin",
+    "steer_feature_high_prob": 0.32,
+    "steer_feature_x_low": 0.87,
+    "steer_y_pull": 0.45,
+    "steer_insulin_z_scale": 1.65
+  },
+  "baseline": {
+    "pearson_objective_0_1": 0.47993995389255467,
+    "per_feature_pearson_r": {},
+    "per_feature_score_0_1": {},
+    "per_interaction_pearson_r": {
+      "dietary_fibers\u00d7simple_sugars": 0.040120092214890685
+    },
+    "per_interaction_score_0_1": {
+      "dietary_fibers\u00d7simple_sugars": 0.47993995389255467
+    },
+    "weights_abs_edge": {
+      "dietary_fibers\u00d7simple_sugars": 1.0
+    }
+  },
+  "augmented": {
+    "pearson_objective_0_1": 0.6700045873342153,
+    "per_feature_pearson_r": {},
+    "per_feature_score_0_1": {},
+    "per_interaction_pearson_r": {
+      "dietary_fibers\u00d7simple_sugars": -0.3400091746684307
+    },
+    "per_interaction_score_0_1": {
+      "dietary_fibers\u00d7simple_sugars": 0.6700045873342153
+    },
+    "weights_abs_edge": {
+      "dietary_fibers\u00d7simple_sugars": 1.0
+    }
+  },
+  "insulin_val_tail": {
+    "insulin_shap_q10": -0.0033918197382782804,
+    "insulin_shap_q25": 0.006064513255742274,
+    "insulin_shap_mean": 0.004802645417132361,
+    "frac_insulin_shap_lt_m03": 0.009478672985781991,
+    "frac_insulin_shap_lt_m08": 0.008688783570300158
+  }
+}
