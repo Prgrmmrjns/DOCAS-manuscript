@@ -36,9 +36,8 @@ def load(root: str) -> tuple[pd.DataFrame, pd.Series]:
 # Feature→feature edges → sign of Pearson(x_start, SHAP(end)): negative edge means higher ``start``
 # should associate with *lower* SHAP on ``end`` (e.g.\ more fiber → less simple-sugars attribution).
 SCM_RULES: list[SCMRule] = [
-    #{"start": "insulin", "end": TARGET, "edge": -1.0},
-    #{"start": "simple_sugars", "end": TARGET, "edge": 0.95},
-    #{"start": "complex_sugars", "end": TARGET, "edge": 0.45},
-    #{"start": "insulin", "end": "simple_sugars", "edge": -0.88},
-    {"start": "dietary_fibers", "end": "simple_sugars", "edge": -1.0},
+    {"start": "insulin", "end": TARGET, "edge": -1.0},
+    {"start": "simple_sugars", "end": TARGET, "edge": 1},
+    {"start": "complex_sugars", "end": TARGET, "edge": 0.8},
+    {"start": "dietary_fibers", "end": "simple_sugars", "edge": -0.3},
 ]

@@ -1,6 +1,0 @@
-digraph d1namo_scm_graph {
-  graph [rankdir=TB, fontname=Helvetica, fontsize=10];
-  node [shape=ellipse, fontname=Helvetica, fontsize=9];
-  edge [fontname=Helvetica, fontsize=8];
-  "dietary_fibers" -> "simple_sugars" [label="−", fontcolor="#c41e3a", color="#c41e3a"];
-}

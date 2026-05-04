@@ -35,7 +35,6 @@ from lib import (
     tree_shap_values_from_df,
 )
 from visuals import (
-    export_scm_dag_dot,
     save_interaction_cf_scatter_before_after_figure,
     save_shap_beeswarm_before_after_figure,
 )
@@ -46,7 +45,7 @@ random_state, test_size, val_frac = 42, 0.25, 0.25
 max_outer_iters = 10
 n_trials = 300
 show_progress_bar = True
-objective_pearson_weight = 1
+objective_pearson_weight = 0.5
 LGB_PARAMS = {"n_estimators": 50, "max_depth": 3, "learning_rate": 0.3, "verbosity": -1, "n_jobs": 1}
 EARLY_STOPPING_ROUNDS = 10
 SYNTH_BATCH_SIZE = 64
@@ -94,18 +93,21 @@ def run_dataset(
     max_outer_iters_override: int | None = None,
     n_trials_override: int | None = None,
     skip_outputs: bool = False,
+    uniform_shap_weights: bool = False,
+    random_state_override: int | None = None,
 ) -> dict[str, Any]:
     sp = synth_params if synth_params is not None else default_synth_params(dm)
+    rs = int(random_state_override) if random_state_override is not None else random_state
     max_iters = int(max_outer_iters if max_outer_iters_override is None else max_outer_iters_override)
     n_trials_local = int(n_trials if n_trials_override is None else n_trials_override)
     RULES = list(dm.SCM_RULES)
     X, y = dm.load(project_root(__file__))
     X_train_pool, X_test_df, y_train_pool, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=random_state,
+        X, y, test_size=test_size, random_state=rs,
         stratify=y if getattr(dm, "TASK", "regression") == "classification" else None,
     )
     X_train_df, X_val_df, y_train, y_val = train_test_split(
-        X_train_pool, y_train_pool, test_size=val_frac, random_state=random_state, shuffle=True,
+        X_train_pool, y_train_pool, test_size=val_frac, random_state=rs, shuffle=True,
         stratify=y_train_pool if getattr(dm, "TASK", "regression") == "classification" else None,
     )
 
@@ -128,7 +130,7 @@ def run_dataset(
     def _domain_pearson(model: Any, Xdf: pd.DataFrame, max_samples: int | None) -> tuple[float, dict[str, Any]]:
         cap = SHAP_PEARSON_MAX_SAMPLES if max_samples is None else min(int(max_samples), len(Xdf))
         return domain_target_pearson_objective(
-            model, Xdf, cols, RULES, dm.TARGET, max_samples=cap, random_state=random_state,
+            model, Xdf, cols, RULES, dm.TARGET, max_samples=cap, random_state=rs,
         )
 
     def shap_pearson_report(model: Any, Xdf: pd.DataFrame) -> dict[str, Any]:
@@ -370,17 +372,19 @@ def run_dataset(
             X_df_aug = pd.DataFrame(X_train_aug, columns=cols)
             m_guide = min(int(sp.shap_synth_guide_samples), len(X_df_aug))
             shap_w = tree_shap_mean_abs_weights(
-                ref_m, X_df_aug, max_samples=m_guide, random_state=random_state + 1_003 * it,
+                ref_m, X_df_aug, max_samples=m_guide, random_state=rs + 1_003 * it,
             )
             if int(shap_w.shape[0]) != d_features:
                 shap_w = np.ones(d_features, dtype=np.float32)
         except Exception:
             shap_w = np.ones(d_features, dtype=np.float32)
+        if uniform_shap_weights:
+            shap_w = np.ones(d_features, dtype=np.float32)
 
         def objective(trial: optuna.Trial) -> float:
             scm_sample_row(X_train_aug, cols, scm_ols, struct_scales, y_head, y_delta_hi, trial, shap_w)
             bp_t = dict(trial.params)
-            rng_t = np.random.default_rng(int(random_state) + 1_000_003 * int(it) + int(trial.number))
+            rng_t = np.random.default_rng(int(rs) + 1_000_003 * int(it) + int(trial.number))
             x_b, y_b = scm_batch_from_bp(
                 X_train_aug, cols, scm_ols, struct_scales, y_head, y_delta_hi, bp_t, trial.number, SYNTH_BATCH_SIZE, rng_t,
                 shap_w,
@@ -405,7 +409,7 @@ def run_dataset(
 
         scored: list[tuple[float, float, float, Any]] = []
         for t in top:
-            rng_k = np.random.default_rng(int(random_state) + 7_001_003 * int(it) + int(t.number))
+            rng_k = np.random.default_rng(int(rs) + 7_001_003 * int(it) + int(t.number))
             x_k, y_k = scm_batch_from_bp(
                 X_train_aug, cols, scm_ols, struct_scales, y_head, y_delta_hi, dict(t.params), t.number,
                 SYNTH_BATCH_SIZE, rng_k, shap_w,
@@ -417,7 +421,7 @@ def run_dataset(
         if cand_score <= prev_score:
             break
 
-        rng_b = np.random.default_rng(int(random_state) + 9_000_011 * int(it) + int(best_trial.number))
+        rng_b = np.random.default_rng(int(rs) + 9_000_011 * int(it) + int(best_trial.number))
         x_batch, y_batch = scm_batch_from_bp(
             X_train_aug, cols, scm_ols, struct_scales, y_head, y_delta_hi, dict(best_trial.params), best_trial.number,
             SYNTH_BATCH_SIZE, rng_b, shap_w,
@@ -426,7 +430,8 @@ def run_dataset(
         y_train_aug = np.concatenate((y_train_aug, y_batch))
         d_comp, prev_score = cand_score - prev_score, cand_score
         synth_rows_added += int(x_batch.shape[0])
-        print(f"composite={cand_score:.4f} (↑{d_comp:+.4f})  val_rmse={cand_rmse:.4f} pearson01={cand_pearson:.3f} +{x_batch.shape[0]} synth")
+        if not skip_outputs:
+            print(f"composite={cand_score:.4f} (↑{d_comp:+.4f})  val_rmse={cand_rmse:.4f} pearson01={cand_pearson:.3f} +{x_batch.shape[0]} synth")
 
     rmse_end, pearson_end, model_after = fit_rmse_and_feas(X_train_aug, y_train_aug)
     test1 = rmse_original_y(X_train_aug, y_train_aug, X_test, y_test_orig)
@@ -511,7 +516,7 @@ def run_dataset(
                         "X_val_df": X_val_df,
                         "TARGET": dm.TARGET,
                         "RULES": [dict(r) for r in RULES],
-                        "random_state": random_state,
+                        "random_state": rs,
                         "max_samples": SHAP_PEARSON_MAX_SAMPLES,
                     },
                     fp,
@@ -521,7 +526,7 @@ def run_dataset(
         _img = os.path.join(project_root(__file__), "manuscript", "images")
         save_shap_beeswarm_before_after_figure(
             model_before=model_before, model_after=model_after, X_val_df=X_val_df,
-            out_path=os.path.join(_img, f"{dm.NAME}_shap_beeswarm_before_after.png"), random_state=random_state,
+            out_path=os.path.join(_img, f"{dm.NAME}_shap_beeswarm_before_after.png"), random_state=rs,
             max_samples=SHAP_PEARSON_MAX_SAMPLES,
         )
         try:
@@ -533,17 +538,13 @@ def run_dataset(
                 rules=RULES,
                 target=dm.TARGET,
                 out_path=os.path.join(_img, f"{dm.NAME}_interaction_cf_scatter.png"),
-                random_state=random_state,
+                random_state=rs,
                 max_samples=SHAP_PEARSON_MAX_SAMPLES,
             )
             if icf is not None:
                 print(f"[{dm.NAME}] feature-rule SHAP scatter: {icf}")
         except Exception:
             pass
-        export_scm_dag_dot(
-            os.path.join(_img, f"{dm.NAME}_scm_graph.dot"), rules=RULES, target=dm.TARGET,
-            feature_columns=dm.FEATURE_COLUMNS, digraph_id=f"{dm.NAME}_scm_graph",
-        )
         print(
             f"[{dm.NAME}] n_features={d_features} n_train={len(X_train)} n_val={len(X_val_df)} n_test={len(X_test_df)} synth_rows_added={synth_rows_added}\n"
             f"[baseline] val_rmse={baseline_rmse:.4f} pearson01={pearson0:.3f} composite={base_c:.4f} test_rmse={test0:.4f}\n"
