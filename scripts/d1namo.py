@@ -11,33 +11,28 @@ TASK = "regression"
 TARGET = "future glucose"
 CSV = "d1namo_combined.csv"
 
-# Column order for synthetic-row traversal and topological tie-breaking.
-FEATURE_COLUMNS: tuple[str, ...] = (
-    "time",
-    "glucose",
-    "glucose_change",
-    "dietary_fibers",
-    "fats",
-    "proteins",
-    "insulin",
-    "simple_sugars",
-    "complex_sugars",
-)
 
 
 def load(root: str) -> tuple[pd.DataFrame, pd.Series]:
     path = os.path.join(root, CSV)
     df = pd.read_csv(path)
-    X = df[list(FEATURE_COLUMNS)].astype(float, copy=False)
+    X = df.drop(columns=[TARGET])
     return X.reset_index(drop=True), df[TARGET].reset_index(drop=True)
 
 
-# Domain rules: target edges → sign of Pearson(SHAP(feature), x_feature).
-# Feature→feature edges → sign of Pearson(x_start, SHAP(end)): negative edge means higher ``start``
-# should associate with *lower* SHAP on ``end`` (e.g.\ more fiber → less simple-sugars attribution).
+# Coarse glucose-metabolism SCM:
+# upstream nutrients/hormone effects + direct parents of future glucose.
 SCM_RULES: list[SCMRule] = [
+    # Feature -> feature relations
+    #{"start": "fats", "end": "simple_sugars", "edge": 0.2},
+    #{"start": "fats", "end": "complex_sugars", "edge": 0.2},
+    #{"start": "dietary_fibers", "end": "simple_sugars", "edge": -0.5},
+    #{"start": "dietary_fibers", "end": "complex_sugars", "edge": -0.5},
+    # Direct effects on target
+    #{"start": "simple_sugars", "end": TARGET, "edge": 1.0},
+    #{"start": "complex_sugars", "end": TARGET, "edge": 0.6},
+    #{"start": "proteins", "end": TARGET, "edge": 0.2},
     {"start": "insulin", "end": TARGET, "edge": -1.0},
-    {"start": "simple_sugars", "end": TARGET, "edge": 1},
-    {"start": "complex_sugars", "end": TARGET, "edge": 0.8},
-    {"start": "dietary_fibers", "end": "simple_sugars", "edge": -0.3},
+    #{"start": "fats", "end": TARGET, "edge": 0.0},
+    #{"start": "dietary_fibers", "end": TARGET, "edge": 0.0},
 ]

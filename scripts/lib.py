@@ -1,411 +1,374 @@
 from __future__ import annotations
 
+import json
 import os
-from collections import defaultdict
-from typing import Any, Mapping, Sequence, TypedDict
+from dataclasses import dataclass
+from typing import Any, Callable, TypedDict
 
-import shap
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")
+
+import optuna
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+import warnings
+warnings.filterwarnings("ignore", category=optuna.exceptions.ExperimentalWarning)
 import numpy as np
 import pandas as pd
-
+import shap
+from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.model_selection import train_test_split
+from model import make_model
+from scoring import CombinedScorer
+from synthesis import OptunaTPESyntheticOptimizer, uniform_bounds_from_training
 
 class SCMRule(TypedDict):
-    """start → end; edge in [-1,1]. ``end == target``: Pearson(SHAP(start), x_start). ``end`` a feature: Pearson(x_start, SHAP(end)) — e.g.\ negative edge ⇒ higher ``start`` should associate with lower SHAP on ``end``."""
-
     start: str
     end: str
     edge: float
 
 
-def project_root(relative_to_file: str) -> str:
-    """Repository root when `relative_to_file` lives under `<root>/scripts/`."""
-    return os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(relative_to_file)), ".."))
+@dataclass(frozen=True)
+class AugContext:
+    X_train: pd.DataFrame
+    y_train: pd.Series
+    cols: list[str]
+    rules: list[dict[str, Any]]
+    target: str
+    rng: np.random.Generator
 
 
-def scm_structural_parents(rules: Sequence[Mapping[str, Any]], *, target: str) -> dict[str, tuple[str, ...]]:
-    """Child → parents from feature→feature rules only (end != target)."""
-    t = str(target)
-    g: dict[str, list[str]] = defaultdict(list)
-    for r in rules:
-        if str(r["end"]) == t:
-            continue
-        g[str(r["end"])].append(str(r["start"]))
-    return {k: tuple(v) for k, v in g.items()}
-
-
-def scm_topological_order(
-    all_features: tuple[str, ...],
-    rules: Sequence[Mapping[str, Any]],
-    *,
-    target: str,
-) -> tuple[str, ...]:
-    """Walk order: Kahn on structural edges; tie-break by position in all_features."""
-    t = str(target)
-    edges = [(str(r["start"]), str(r["end"])) for r in rules if str(r["end"]) != t]
-    fs = tuple(all_features)
-    idx = {f: i for i, f in enumerate(fs)}
-    pred: dict[str, set[str]] = {f: set() for f in fs}
-    for a, b in edges:
-        if a in idx and b in idx:
-            pred[b].add(a)
-    done: set[str] = set()
-    out: list[str] = []
-    while len(done) < len(fs):
-        ready = [n for n in fs if n not in done and pred[n] <= done]
-        if not ready:
-            out.extend(sorted((n for n in fs if n not in done), key=lambda x: idx[x]))
-            break
-        ready.sort(key=lambda x: idx[x])
-        for n in ready:
-            done.add(n)
-            out.append(n)
-    return tuple(out)
-
-
-def scm_parent_effect_sign(rules: Sequence[Mapping[str, Any]], *, target: str) -> dict[str, dict[str, int]]:
-    """Integer sign per structural edge for Graphviz (from rule edge)."""
-    t = str(target)
-    out: dict[str, dict[str, int]] = {}
-    for r in rules:
-        if str(r["end"]) == t:
-            continue
-        ed = float(r["edge"])
-        sg = 0 if abs(ed) < 1e-12 else (1 if ed > 0 else -1)
-        out.setdefault(str(r["end"]), {})[str(r["start"])] = sg
-    return out
-
-
-def val_subsample_for_shap_plot(X_val_df: pd.DataFrame, max_samples: int, random_state: int) -> pd.DataFrame:
-    """Same val subsample as SHAP beeswarm export in `visuals` / Pearson objective."""
-    rng = np.random.default_rng(int(random_state))
-    n = min(int(max_samples), len(X_val_df))
-    idx = rng.choice(len(X_val_df), size=n, replace=False) if len(X_val_df) > n else np.arange(len(X_val_df))
-    return X_val_df.iloc[idx].copy().reset_index(drop=True)
-
-
-def tree_shap_df_sv_ev(model: Any, X_df: pd.DataFrame) -> tuple[np.ndarray, float]:
-    """TreeSHAP on DataFrame: SHAP matrix (n, F) and scalar E[f(x)] (regression)."""
-    ex = shap.TreeExplainer(model)
-    try:
-        sv = ex.shap_values(X_df, check_additivity=False)
-    except TypeError:
-        sv = ex.shap_values(X_df)
-    if isinstance(sv, list):
-        sv = np.asarray(sv[0])
-    sv = np.asarray(sv, dtype=float)
-    if sv.ndim == 1:
-        sv = sv.reshape(len(X_df), -1)
-    ev_arr = np.asarray(ex.expected_value).ravel()
-    ev0 = float(ev_arr[0]) if ev_arr.size else 0.0
-    return sv, ev0
-
-
-def tree_shap_values_from_df(model: Any, X_df: pd.DataFrame) -> np.ndarray:
-    sv, _ = tree_shap_df_sv_ev(model, X_df)
-    return sv
-
-
-def tree_shap_mean_abs_weights(
-    model: Any,
-    X_df: pd.DataFrame,
-    *,
-    max_samples: int = 512,
-    random_state: int = 0,
-    clip_min: float = 0.28,
-    clip_max: float = 3.8,
-) -> np.ndarray:
-    """Per-feature weights ~ mean |TreeSHAP|, median-normalized (for scaling synthetic perturbations)."""
-    n = len(X_df)
-    if n < 2:
-        return np.ones(X_df.shape[1], dtype=np.float32)
-    m = min(int(max_samples), n)
-    rng = np.random.default_rng(int(random_state))
-    Xs = X_df.iloc[rng.choice(n, size=m, replace=False)].copy() if n > m else X_df
-    try:
-        sv = np.asarray(tree_shap_values_from_df(model, Xs), dtype=np.float64)
-    except Exception:
-        return np.ones(X_df.shape[1], dtype=np.float32)
-    if sv.ndim != 2 or sv.shape[1] != X_df.shape[1]:
-        return np.ones(X_df.shape[1], dtype=np.float32)
-    ma = np.mean(np.abs(sv), axis=0)
-    med = float(np.median(ma)) + 1e-12
-    w = np.clip(ma / med, clip_min, clip_max).astype(np.float32)
-    return w
-
-
-def _pearson_r_xy(x: np.ndarray, y: np.ndarray) -> float:
-    """Pearson r via centered dot product (faster than np.corrcoef 2×2)."""
+def pearson_r(x: np.ndarray, y: np.ndarray) -> float:
     x = np.asarray(x, dtype=np.float64, order="C").ravel()
     y = np.asarray(y, dtype=np.float64, order="C").ravel()
-    n = int(x.size)
-    if n < 2 or n != int(y.size):
+    if x.size < 2 or x.size != y.size:
         return float("nan")
-    mx = float(x.mean())
-    my = float(y.mean())
-    dx = x - mx
-    dy = y - my
-    denom = float(np.sqrt(float(dx @ dx) * float(dy @ dy)))
-    if denom < 1e-18:
+    if not np.all(np.isfinite(x)) or not np.all(np.isfinite(y)):
         return float("nan")
-    return float((dx @ dy) / denom)
+    if np.std(x) <= 1e-12 or np.std(y) <= 1e-12:
+        return float("nan")
+    r = np.corrcoef(x, y)[0, 1]
+    return float(r) if np.isfinite(r) else float("nan")
 
 
-def domain_target_pearson_objective(
-    model: Any,
-    X_val_df: pd.DataFrame,
-    cols: list[str],
-    scm_rules: Sequence[Mapping[str, Any]],
-    target_name: str,
-    *,
-    max_samples: int,
-    random_state: int,
-) -> tuple[float, dict[str, Any]]:
-    """
-    Weighted Pearson alignment on the val subsample:
-    - ``end == target``: Pearson(SHAP(main ``start``), x_start).
-    - ``end`` is a feature (not target): Pearson(observed x_start, SHAP(``end``)) on the same rows
-      (higher ``start`` should align with lower SHAP on ``end`` when ``edge<0``).
-    Per-rule score = clip(0.5*(1 + sign(edge)*r), 0, 1); overall = |edge|-weighted mean.
-    """
-    t = str(target_name)
-    col_idx = {c: i for i, c in enumerate(cols)}
+class iSHAP:
+    @staticmethod
+    def optimize_synthetic_points(
+        ctx: AugContext,
+        fitness_fn: Callable[[pd.DataFrame, pd.Series], tuple[float, float]],
+        *,
+        n_trials: int = 100,
+        n_points: int = 10,
+        objective_metric_weight: float = 0.5,
+        metric_scale: float = 1.0,
+    ) -> tuple[pd.DataFrame, pd.Series]:
+        """Optimize synthetic points via pluggable optimizer backend."""
+        space = uniform_bounds_from_training(ctx.X_train, ctx.y_train, ctx.cols)
+        scorer = CombinedScorer(metric_weight=objective_metric_weight, metric_anchor=metric_scale)
+        optimizer = OptunaTPESyntheticOptimizer()
+        X_best, y_best = optimizer.optimize(
+            space=space,
+            n_points=n_points,
+            n_trials=n_trials,
+            rng=ctx.rng,
+            scorer=scorer,
+            fitness_fn=fitness_fn,
+        )
+        return X_best, y_best.rename(ctx.y_train.name)
 
-    def _feature_interaction_rule(r: Mapping[str, Any]) -> bool:
-        v2, u = str(r["end"]), str(r["start"])
-        return v2 != t and u in col_idx and v2 in col_idx
-
-    Xs = val_subsample_for_shap_plot(X_val_df, max_samples, random_state)
-    try:
-        sv = tree_shap_values_from_df(model, Xs)
-    except Exception:
-        return 0.5, {
-            "per_feature_pearson_r": {},
-            "per_feature_score_0_1": {},
-            "per_interaction_pearson_r": {},
-            "per_interaction_score_0_1": {},
-        }
-    per_r: dict[str, float] = {}
-    per_sc: dict[str, float] = {}
-    per_ir: dict[str, float] = {}
-    per_isc: dict[str, float] = {}
-    num, den = 0.0, 0.0
-    for r in scm_rules:
-        edge = float(r["edge"])
-        w = abs(edge)
-        if w < 1e-12:
-            continue
-        sgn = 1.0 if edge > 1e-12 else (-1.0 if edge < -1e-12 else 1.0)
-        if _feature_interaction_rule(r):
-            u, v2 = str(r["start"]), str(r["end"])
-            iv = col_idx[v2]
-            phi_end = sv[:, iv].astype(np.float64, copy=False)
-            xs = Xs[u].to_numpy(dtype=np.float64, copy=False)
-            if float(np.std(xs)) < 1e-12 or float(np.std(phi_end)) < 1e-12:
-                score = 0.5
-                rr = float("nan")
-            else:
-                rr = _pearson_r_xy(xs, phi_end)
-                if not np.isfinite(rr):
-                    score = 0.5
-                else:
-                    score = float(np.clip(0.5 * (1.0 + sgn * rr), 0.0, 1.0))
-            key = f"{u}×{v2}"
-            per_ir[key] = float(rr) if np.isfinite(rr) else float("nan")
-            per_isc[key] = score
-            num += w * score
-            den += w
-            continue
-        if str(r["end"]) != t:
-            continue
-        u = str(r["start"])
-        if u not in col_idx:
-            continue
-        ki = col_idx[u]
-        phi_u = sv[:, ki].astype(np.float64, copy=False)
-        x_u = Xs[u].to_numpy(dtype=np.float64, copy=False)
-        if float(np.std(phi_u)) < 1e-12 or float(np.std(x_u)) < 1e-12:
-            score = 0.5
-            rr = float("nan")
-        else:
-            rr = _pearson_r_xy(phi_u, x_u)
-            if not np.isfinite(rr):
-                score = 0.5
-            else:
-                score = float(np.clip(0.5 * (1.0 + sgn * rr), 0.0, 1.0))
-        per_r[u] = float(rr) if np.isfinite(rr) else float("nan")
-        per_sc[u] = score
-        num += w * score
-        den += w
-    overall = float(np.clip(num / den, 0.0, 1.0)) if den > 0 else 0.5
-    w_main = {
-        str(r["start"]): abs(float(r["edge"]))
-        for r in scm_rules
-        if str(r["end"]) == t and str(r["start"]) in col_idx
-    }
-    w_ix = {
-        f'{str(r["start"])}×{str(r["end"])}': abs(float(r["edge"]))
-        for r in scm_rules
-        if _feature_interaction_rule(r)
-    }
-    diag: dict[str, Any] = {
-        "per_feature_pearson_r": per_r,
-        "per_feature_score_0_1": per_sc,
-        "per_interaction_pearson_r": per_ir,
-        "per_interaction_score_0_1": per_isc,
-        "weights_abs_edge": {**w_main, **w_ix},
-    }
-    return overall, diag
-
-
-def _mass_and_count_aligned(vals: np.ndarray, sgn: float) -> tuple[float, float]:
-    """(mass_aligned_frac, count_aligned_frac) in [0,1], each 0.5 if undefined."""
-    v = np.asarray(vals, dtype=float).ravel()
-    a = np.abs(v)
-    n = int(v.size)
-    tot = float(np.sum(a))
-    sgn = 1.0 if sgn > 0 else -1.0
-    if not np.isfinite(tot) or tot <= 1e-18 or n < 1:
-        return 0.5, 0.5
-    mass = float(np.sum(a[(sgn * v) > 0.0])) / tot
-    med = float(np.median(a))
-    tol = max(1e-18, 1e-6 * (med + 1e-18))
-    mask = a > tol
-    if int(mask.sum()) > 0:
-        count = float(np.mean((sgn * v[mask]) > 0.0))
-    else:
-        count = 0.5
-    return float(np.clip(mass, 0.0, 1.0)), float(np.clip(count, 0.0, 1.0))
-
-
-def _rule_score(vals: np.ndarray, sgn: float) -> float:
-    """Bee-swarm consistency: geometric mean of mass-aligned and row-sign agreement (both essential)."""
-    mass, count = _mass_and_count_aligned(vals, sgn)
-    return float(np.sqrt(max(1e-12, mass) * max(1e-12, count)))
-
-
-def _rule_diag(vals: np.ndarray, sgn: float) -> dict[str, float]:
-    v = np.asarray(vals, dtype=float).ravel()
-    a = np.abs(v)
-    n = int(v.size)
-    med = float(np.median(a)) if n else 0.0
-    tol = max(1e-18, 1e-6 * (med + 1e-18))
-    mass_aligned, count_aligned = _mass_and_count_aligned(vals, sgn)
-    score = _rule_score(vals, sgn)
-    return {
-        "n": n,
-        "n_nonzero": int(np.count_nonzero(a > tol)),
-        "mean": float(np.mean(v)) if n else 0.0,
-        "mean_abs": float(np.mean(a)) if n else 0.0,
-        "mass_aligned_frac": mass_aligned,
-        "count_aligned_frac": count_aligned,
-        "score_geom_mass_count": score,
-    }
-
-
-def _iter_rule_scores(
-    pc: dict[str, Any] | None,
-    iv: Any,
-    cols: list[str],
-    rules: list[dict[str, Any]],
-    target_name: str,
-    *,
-    phi: np.ndarray | None = None,
-):
-    """Yield (rule, sgn, weight, score, source, diag) for each usable rule."""
-    nf = (iv.shape[1] - 1) if iv is not None and getattr(iv, "ndim", 0) == 3 else 0
-    for r in rules:
-        u, v = str(r["start"]), str(r["end"])
-        e = float(max(-1.0, min(1.0, float(r["edge"]))))
-        w = abs(e)
-        if w < 1e-12:
-            continue
-        sgn = 1.0 if e > 0 else -1.0
-        source = "none"
-        diag: dict[str, float] | None = None
-        score = 0.5
-        if v == target_name:
-            if u not in cols:
-                continue
-            if phi is not None and getattr(phi, "ndim", 0) == 2 and phi.shape[1] == len(cols):
-                vals = phi[:, cols.index(u)]
-                score = _rule_score(vals, sgn)
-                diag = _rule_diag(vals, sgn)
-                source = "phi"
-            else:
-                mac = (pc or {}).get("mean_abs_contrib") or {}
-                mc = (pc or {}).get("mean_contrib") or {}
-                wu = float(mac.get(u, 0.0))
-                if wu <= 1e-12:
-                    score = 0.5
-                else:
-                    rr = max(-1.0, min(1.0, float(mc.get(u, 0.0)) / wu))
-                    score = float(np.clip(0.5 + 0.5 * sgn * rr, 0.0, 1.0))
-                diag = {
-                    "n": 0,
-                    "n_nonzero": 0,
-                    "mean": float(mc.get(u, 0.0)),
-                    "mean_abs": wu,
-                    "mass_aligned_frac": score,
-                    "count_aligned_frac": float("nan"),
+    @staticmethod
+    def compact_rule_deltas(before_rules: list[dict[str, Any]], after_rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        B = {str(r.get("rule")): r for r in before_rules}
+        A = {str(r.get("rule")): r for r in after_rules}
+        out: list[dict[str, Any]] = []
+        for key in sorted(set(B) | set(A)):
+            b, a = B.get(key, {}), A.get(key, {})
+            br, ar_ = b.get("pearson_r"), a.get("pearson_r")
+            out.append(
+                {
+                    "rule": key,
+                    "weight": a.get("weight", b.get("weight")),
+                    "ideal_pearson": a.get("ideal_pearson", b.get("ideal_pearson")),
+                    "pearson_r_before": br,
+                    "pearson_r_after": ar_,
+                    "pearson_r_delta_after_minus_before": None
+                    if br is None or ar_ is None
+                    else round(float(ar_) - float(br), 4),
                 }
-                source = "pc"
-        # Feature–feature interaction rules (SHAP interaction tensor) disabled.
-        # else:
-        #     if u not in cols or v not in cols:
-        #         continue
-        #     ia, ib = cols.index(u), cols.index(v)
-        #     if iv is None or ia >= nf or ib >= nf:
-        #         continue
-        #     vals = iv[:, ia, ib]
-        #     score = _rule_score(vals, sgn)
-        #     diag = _rule_diag(vals, sgn)
-        #     source = "iv"
+            )
+        return out
+
+    @staticmethod
+    def model_report(
+        model: Any,
+        X_df: pd.DataFrame,
+        cols: list[str],
+        rules: list[dict[str, Any]],
+        target: str,
+        *,
+        random_state: int = 42,
+        max_samples: int = 200,
+    ) -> dict[str, Any]:
+        t = str(target)
+        col_idx = {c: i for i, c in enumerate(cols)}
+        n = min(int(max_samples), len(X_df))
+        if len(X_df) > n:
+            rng = np.random.default_rng(int(random_state))
+            idx = rng.choice(len(X_df), size=n, replace=False)
+            Xs = X_df.iloc[idx].copy().reset_index(drop=True)
         else:
-            continue
-        yield r, sgn, w, score, source, diag
+            Xs = X_df.reset_index(drop=True)
+        ex = shap.TreeExplainer(model)
+        try:
+            sv = ex.shap_values(Xs, check_additivity=False)
+        except TypeError:
+            sv = ex.shap_values(Xs)
+        if isinstance(sv, list):
+            sv = np.asarray(sv[0])
+        sv = np.asarray(sv, dtype=float)
+        if sv.ndim == 1:
+            sv = sv.reshape(len(Xs), -1)
+        sv = np.asarray(sv, dtype=np.float64)
+        items: list[dict[str, Any]] = []
+        w_sum = dev_sum = 0.0
+        for r in rules:
+            edge = float(r["edge"])
+            u, v = str(r["start"]), str(r["end"])
+            edge_mag = abs(edge)
+            w = (edge_mag if edge_mag > 1e-12 else 1.0) * (0.55 if v != t else 1.0)
+            ideal = 0.0 if edge_mag <= 1e-12 else (1.0 if edge > 0 else -1.0)
+            if v == t:
+                if u not in col_idx:
+                    continue
+                rr = pearson_r(sv[:, col_idx[u]], Xs[u].to_numpy(np.float64, copy=False))
+                key = f"{u}->{t}"
+            else:
+                if u not in col_idx or v not in col_idx:
+                    continue
+                rr = pearson_r(Xs[u].to_numpy(np.float64, copy=False), sv[:, col_idx[v]])
+                key = f"{u}->{v}"
+            if not np.isfinite(rr):
+                dev, ro, diff = 2.0, None, None
+            else:
+                ro = float(rr)
+                dev = abs(ro - ideal)
+                diff = round(ro - ideal, 4)
+            w_sum += w
+            dev_sum += w * dev
+            items.append(
+                {
+                    "rule": key,
+                    "weight": round(w, 4),
+                    "pearson_r": None if ro is None else round(ro, 4),
+                    "ideal_pearson": ideal,
+                    "pearson_r_diff": diff,
+                }
+            )
+        feasibility = 0.5 if w_sum < 1e-18 else float(np.clip(1.0 - dev_sum / w_sum / 2.0, 0.0, 1.0))
+        return {"feasibility_score_0_1": round(feasibility, 4), "rules": items}
 
+    @staticmethod
+    def regression_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+        return float(np.sqrt(mean_squared_error(np.asarray(y_true), np.asarray(y_pred))))
+        
+    @staticmethod
+    def run_pipeline(
+        X: pd.DataFrame,
+        y: pd.Series,
+        rules: list[dict[str, Any]],
+        target: str,
+        root: str,
+        name: str,
+        *,
+        task: str = "regression",
+        random_state: int = 42,
+        test_size: float = 0.25,
+        synth_points_per_round: int = 10,
+        n_trials: int = 1000,
+        objective_metric_weight: float = 0.5,
+    ) -> dict[str, Any]:
+        cols = list(X.columns)
+        t = str(target)
 
-def feasibility_unified(
-    pc: dict[str, Any] | None,
-    iv: Any,
-    cols: list[str],
-    rules: list[dict[str, Any]],
-    target_name: str,
-    *,
-    phi: np.ndarray | None = None,
-) -> float:
-    """Weighted mean of per-rule mass-aligned consistency scores (higher = bee-swarm more on the right side)."""
-    num, den = 0.0, 0.0
-    for _r, _sgn, w, score, _src, _diag in _iter_rule_scores(pc, iv, cols, rules, target_name, phi=phi):
-        num += w * score
-        den += w
-    return float(np.clip(num / den, 0.0, 1.0)) if den > 0 else 0.5
+        X_all = X[cols].to_numpy(dtype=np.float64)
+        y_all = y.to_numpy(dtype=np.float64)
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_all, y_all, test_size=test_size, random_state=random_state, shuffle=True,
+        )
+        X_train = np.asarray(X_train, dtype=np.float64)
+        X_val = np.asarray(X_val, dtype=np.float64)
+        y_train = np.asarray(y_train, dtype=np.float64)
+        y_val = np.asarray(y_val, dtype=np.float64)
+        X_val_df = pd.DataFrame(X_val, columns=cols)
+        is_classification = str(task).lower() == "classification"
+        classes = np.unique(y_train) if is_classification else np.asarray([], dtype=np.float64)
 
+        def _metric_and_loss(m: Any) -> tuple[float, float]:
+            pred = np.asarray(m.predict(X_val), dtype=np.float64)
+            if is_classification:
+                d = np.abs(pred[:, None] - classes[None, :])
+                pred_cls = classes[np.argmin(d, axis=1)]
+                acc = float(accuracy_score(y_val, pred_cls))
+                return acc, 1.0 - acc
+            error = iSHAP.regression_error(y_val, pred)
+            return error, error
 
-def feasibility_report(
-    pc: dict[str, Any] | None,
-    iv: Any,
-    cols: list[str],
-    rules: list[dict[str, Any]],
-    target_name: str,
-    *,
-    phi: np.ndarray | None = None,
-) -> dict[str, Any]:
-    """Per-rule SHAP diagnostics (score, sign, alignment stats) + overall weighted score."""
-    items: list[dict[str, Any]] = []
-    num, den = 0.0, 0.0
-    for r, sgn, w, score, source, diag in _iter_rule_scores(pc, iv, cols, rules, target_name, phi=phi):
-        items.append({
-            "start": str(r["start"]),
-            "end": str(r["end"]),
-            "edge": float(r["edge"]),
-            "sign": int(sgn),
-            "weight": float(w),
-            "score": float(score),
-            "source": source,
-            "diag": diag or {},
-        })
-        num += w * score
-        den += w
-    overall = float(np.clip(num / den, 0.0, 1.0)) if den > 0 else 0.5
-    return {"overall": overall, "rules": items}
+        feas_max_samples = 200
+        feas_n = min(feas_max_samples, len(X_val_df))
+        if len(X_val_df) > feas_n:
+            _rng_feas = np.random.default_rng(int(random_state))
+            _idx_feas = _rng_feas.choice(len(X_val_df), size=feas_n, replace=False)
+            X_feas_df = X_val_df.iloc[_idx_feas].copy().reset_index(drop=True)
+        else:
+            X_feas_df = X_val_df.reset_index(drop=True)
+
+        def _report(m: Any) -> tuple[dict[str, Any], float]:
+            rep = iSHAP.model_report(
+                m,
+                X_feas_df,
+                cols,
+                rules,
+                t,
+                random_state=random_state,
+                max_samples=feas_max_samples,
+            )
+            return rep, float(rep.get("feasibility_score_0_1") or 0.0)
+
+        model = make_model(random_state=random_state, n_jobs=-1)
+        model.fit(X_train, y_train)
+        feas_before, score_before = _report(model)
+        metric_before, loss_before = _metric_and_loss(model)
+
+        scorer = CombinedScorer(metric_weight=objective_metric_weight, metric_anchor=loss_before)
+        def _combined(loss_v: float, feas_v: float) -> float:
+            return scorer.score(loss_v, feas_v)
+        metric_name = "accuracy" if is_classification else "error"
+        print(
+            f"initial {metric_name}={metric_before:.6f} feasibility={score_before:.4f} "
+            f"combined={_combined(loss_before, score_before):.6f}"
+        )
+
+        rng = np.random.default_rng(random_state)
+        X_aug = X_train.copy()
+        y_aug = y_train.copy()
+        feasibility_per_added_datapoint: list[dict[str, float | int]] = []
+        n_added = 0
+        best_metric = float(metric_before)
+        best_loss = float(loss_before)
+        best_score = float(score_before)
+        best_combined = _combined(best_loss, best_score)
+
+        while True:
+            def _fitness_round(X_s: pd.DataFrame, y_s: pd.Series) -> tuple[float, float]:
+                X_one = X_s[cols].to_numpy(dtype=np.float64)
+                y_one = y_s.to_numpy(dtype=np.float64)
+                X_fit = np.vstack([X_aug, X_one])
+                y_fit = np.concatenate([y_aug, y_one])
+                m = make_model(random_state=random_state, n_jobs=1)
+                m.fit(X_fit, y_fit)
+                _, feas = _report(m)
+                _, loss = _metric_and_loss(m)
+                return loss, feas
+
+            ctx = AugContext(
+                X_train=pd.DataFrame(X_aug, columns=cols),
+                y_train=pd.Series(y_aug, name=y.name),
+                cols=cols,
+                rules=rules,
+                target=t,
+                rng=rng,
+            )
+            X_one_df, y_one_s = iSHAP.optimize_synthetic_points(
+                ctx,
+                _fitness_round,
+                n_trials=n_trials,
+                n_points=synth_points_per_round,
+                objective_metric_weight=objective_metric_weight,
+                metric_scale=scorer.metric_anchor,
+            )
+            X_one = X_one_df[cols].to_numpy(dtype=np.float64)
+            y_one = y_one_s.to_numpy(dtype=np.float64)
+
+            X_try = np.vstack([X_aug, X_one])
+            y_try = np.concatenate([y_aug, y_one])
+
+            m_step = make_model(random_state=random_state, n_jobs=-1)
+            m_step.fit(X_try, y_try)
+            _, step_score = _report(m_step)
+            step_metric, step_loss = _metric_and_loss(m_step)
+            step_combined = _combined(step_loss, step_score)
+
+            if step_combined > best_combined + 1e-9:
+                X_aug = X_try
+                y_aug = y_try
+                n_added += len(X_one)
+                best_metric = float(step_metric)
+                best_loss = float(step_loss)
+                best_score = float(step_score)
+                best_combined = float(step_combined)
+                row = {
+                    "n_added_synth_rows": int(n_added),
+                    "metric_holdout": round(step_metric, 6),
+                    "feasibility_score_0_1": round(step_score, 4),
+                    "combined_score": round(step_combined, 6),
+                }
+                feasibility_per_added_datapoint.append(row)
+                print(
+                    f"added={row['n_added_synth_rows']} {metric_name}={row['metric_holdout']:.6f} "
+                    f"feasibility={row['feasibility_score_0_1']:.4f} "
+                    f"combined={row['combined_score']:.6f}"
+                )
+            else:
+                print(
+                    f"reject {metric_name}={step_metric:.6f} feasibility={step_score:.4f} "
+                    f"combined={step_combined:.6f} best_combined={best_combined:.6f}"
+                )
+                print(
+                    f"stop best_{metric_name}={best_metric:.6f} best_feasibility={best_score:.4f} "
+                    f"best_combined={best_combined:.6f}"
+                )
+                break
+
+        model_synth = make_model(random_state=random_state, n_jobs=-1)
+        model_synth.fit(X_aug, y_aug)
+        X_eval_synth = np.vstack([X_aug, X_val])
+        feas_after, score_after = _report(model_synth)
+        metric_after, _ = _metric_and_loss(model_synth)
+
+        X_eval_df = pd.DataFrame(np.vstack([X_train, X_val]), columns=cols)
+        X_eval_synth_df = pd.DataFrame(X_eval_synth, columns=cols)
+
+        results_dir = os.path.join(root, "results", name)
+        os.makedirs(results_dir, exist_ok=True)
+
+        payload = {
+            "feasibility": {
+                "before": round(score_before, 4),
+                "after": round(score_after, 4),
+                "delta_after_minus_before": round(score_after - score_before, 4),
+            },
+            "feasibility_per_added_datapoint": feasibility_per_added_datapoint,
+            "rule_components": iSHAP.compact_rule_deltas(
+                list(feas_before.get("rules", [])),
+                list(feas_after.get("rules", [])),
+            ),
+            "holdout_metric": {
+                "metric_name": metric_name,
+                "n_synthetic_rows_added": int(n_added),
+                "metric_holdout_before_synthetic": round(metric_before, 6),
+                "metric_holdout_after_synthetic": round(metric_after, 6),
+                "delta_metric_holdout": round(metric_after - metric_before, 6),
+            },
+        }
+        with open(os.path.join(results_dir, f"{name}_feasibility.json"), "w") as fp:
+            json.dump(payload, fp, indent=2)
+
+        return {
+            "cols": cols,
+            "target": t,
+            "model_before": model,
+            "model_after": model_synth,
+            "X_eval_before": X_eval_df,
+            "X_eval_after": X_eval_synth_df,
+            "X_val": X_val_df,
+            "results_dir": results_dir,
+        }

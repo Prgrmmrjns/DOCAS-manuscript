@@ -1,0 +1,44 @@
+{
+  "feasibility": {
+    "before": 0.8306,
+    "after": 0.9892,
+    "delta_after_minus_before": 0.1586
+  },
+  "feasibility_per_added_datapoint": [
+    {
+      "n_added_synth_rows": 20,
+      "metric_holdout": 1.0,
+      "feasibility_score_0_1": 0.9762,
+      "combined_score": 0.9881
+    },
+    {
+      "n_added_synth_rows": 40,
+      "metric_holdout": 1.0,
+      "feasibility_score_0_1": 0.9858,
+      "combined_score": 0.9929
+    },
+    {
+      "n_added_synth_rows": 60,
+      "metric_holdout": 1.0,
+      "feasibility_score_0_1": 0.9892,
+      "combined_score": 0.9946
+    }
+  ],
+  "rule_components": [
+    {
+      "rule": "Air Pollution->Level",
+      "weight": 1.0,
+      "ideal_pearson": 1.0,
+      "pearson_r_before": 0.6612,
+      "pearson_r_after": 0.9783,
+      "pearson_r_delta_after_minus_before": 0.3171
+    }
+  ],
+  "holdout_metric": {
+    "metric_name": "accuracy",
+    "n_synthetic_rows_added": 60,
+    "metric_holdout_before_synthetic": 1.0,
+    "metric_holdout_after_synthetic": 1.0,
+    "delta_metric_holdout": 0.0
+  }
+}

@@ -2,56 +2,28 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\providecommand \oddpage@label [2]{}
-\citation{arrieta2020explainable,collins2015tripod}
-\citation{prosperi2020causal}
-\citation{geirhos2020shortcut}
-\citation{prosperi2020causal,carloni2025role}
-\citation{janzing2020feature,doshi2017towards,molnar2022interpretable}
-\citation{lundberg2017unified}
-\citation{aas2021explaining}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
-\citation{heskes2020causal,frye2020asymmetric,carloni2025role,ng2025causalshap}
-\citation{fang2024llmsontabular,zhao2024explainabilityllmsurvey}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Methods}{4}{section.2}\protected@file@percent }
-\newlabel{sec:methods}{{2}{4}{Methods}{section.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces High-level orchestration: standard {LightGBM} regression on scaled targets with early stopping on real validation rows; {Optuna} {TPE} proposes {SCM} sampling and label-push parameters; feasibility is evaluated post-hoc from {SHAP} against declared rules. Source vector: \texttt  {images/shapprop\_algorithm\_flowchart.svg}.}}{4}{figure.caption.4}\protected@file@percent }
-\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:shapprop_algorithm}{{1}{4}{High-level orchestration: standard {LightGBM} regression on scaled targets with early stopping on real validation rows; {Optuna} {TPE} proposes {SCM} sampling and label-push parameters; feasibility is evaluated post-hoc from {SHAP} against declared rules. Source vector: \texttt {images/shapprop\_algorithm\_flowchart.svg}}{figure.caption.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces {D1NAMO} {SCM} prior: \texttt  {d1namo.SCM\_RULES} lists weighted directed edges (feature$\rightarrow $feature structure and optional edges into \emph  {future glucose}). \texttt  {export\_scm\_dag\_dot} in \texttt  {scripts/visuals.py} writes \texttt  {images/d1namo\_scm\_graph.dot}; render to {PNG} for the manuscript.}}{5}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:d1namo_causal}{{2}{5}{{D1NAMO} {SCM} prior: \texttt {d1namo.SCM\_RULES} lists weighted directed edges (feature$\rightarrow $feature structure and optional edges into \emph {future glucose}). \texttt {export\_scm\_dag\_dot} in \texttt {scripts/visuals.py} writes \texttt {images/d1namo\_scm\_graph.dot}; render to {PNG} for the manuscript}{figure.caption.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Validation explanations before vs.\ after augmentation: {SHAP} bee-swarm columns and a {ShapIQ} second-order interaction graph on a fixed validation subsample (\texttt  {scripts/visuals.py}).}}{6}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:d1namo_shap}{{3}{6}{Validation explanations before vs.\ after augmentation: {SHAP} bee-swarm columns and a {ShapIQ} second-order interaction graph on a fixed validation subsample (\texttt {scripts/visuals.py})}{figure.caption.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Pipeline}{6}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}{D1NAMO}: {SCM}-guided synthetic augmentation}{7}{subsection.2.2}\protected@file@percent }
-\newlabel{sec:d1namo_synth}{{2.2}{7}{{D1NAMO}: {SCM}-guided synthetic augmentation}{subsection.2.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Composite {TPE} objective}{8}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Feasibility scoring}{8}{subsection.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Data and domain priors}{8}{subsection.2.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{{D1NAMO} (regression).}{8}{section*.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Evaluation protocol}{9}{subsection.2.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Results}{9}{section.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces {D1NAMO} run summary (fill from console output / \texttt  {results/d1namo\_shap\_feasibility.json} after \texttt  {python scripts/main.py}).}}{9}{table.caption.8}\protected@file@percent }
-\newlabel{tab:shapprop_main}{{1}{9}{{D1NAMO} run summary (fill from console output / \texttt {results/d1namo\_shap\_feasibility.json} after \texttt {python scripts/main.py})}{table.caption.8}{}}
-\@writefile{toc}{\contentsline {paragraph}{{D1NAMO}.}{9}{section*.9}\protected@file@percent }
-\bibstyle{unsrt}
-\bibdata{references}
-\bibcite{arrieta2020explainable}{{1}{}{{}}{{}}}
-\bibcite{collins2015tripod}{{2}{}{{}}{{}}}
-\bibcite{prosperi2020causal}{{3}{}{{}}{{}}}
-\bibcite{geirhos2020shortcut}{{4}{}{{}}{{}}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Discussion}{10}{section.4}\protected@file@percent }
-\bibcite{carloni2025role}{{5}{}{{}}{{}}}
-\bibcite{janzing2020feature}{{6}{}{{}}{{}}}
-\bibcite{doshi2017towards}{{7}{}{{}}{{}}}
-\bibcite{molnar2022interpretable}{{8}{}{{}}{{}}}
-\bibcite{lundberg2017unified}{{9}{}{{}}{{}}}
-\bibcite{aas2021explaining}{{10}{}{{}}{{}}}
-\bibcite{heskes2020causal}{{11}{}{{}}{{}}}
-\bibcite{frye2020asymmetric}{{12}{}{{}}{{}}}
-\bibcite{ng2025causalshap}{{13}{}{{}}{{}}}
-\bibcite{fang2024llmsontabular}{{14}{}{{}}{{}}}
-\bibcite{zhao2024explainabilityllmsurvey}{{15}{}{{}}{{}}}
-\bibcite{dubosson2018open}{{16}{}{{}}{{}}}
-\providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{12}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Method}{1}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Problem Setup}{1}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Optimization Objective}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Round-Based Augmentation}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Experimental Setup}{2}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Datasets}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Rules}{2}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Results}{2}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Quantitative Summary}{2}{subsection.4.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Before/after results from current pipeline runs.}}{3}{table.1}\protected@file@percent }
+\newlabel{tab:main_results}{{1}{3}{Before/after results from current pipeline runs}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Visual Evidence}{3}{subsection.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces d1namo SHAP beeswarm before and after augmentation.}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:d1_bee}{{1}{3}{d1namo SHAP beeswarm before and after augmentation}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{3}{section.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces d1namo correlation-based interaction network before and after augmentation.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:d1_net}{{2}{4}{d1namo correlation-based interaction network before and after augmentation}{figure.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Limitations and Future Work}{4}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{4}{section.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces cancer\_air\_pollution SHAP beeswarm before and after augmentation.}}{5}{figure.3}\protected@file@percent }
+\newlabel{fig:cancer_bee}{{3}{5}{cancer\_air\_pollution SHAP beeswarm before and after augmentation}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces cancer\_air\_pollution correlation-based interaction network before and after augmentation.}}{5}{figure.4}\protected@file@percent }
+\newlabel{fig:cancer_net}{{4}{5}{cancer\_air\_pollution correlation-based interaction network before and after augmentation}{figure.4}{}}
+\gdef \@abspage@last{5}

@@ -1,6 +1,10 @@
-# iSHAP / SHAPPROP
+# iSHAP
 
-NSGA-II over **custom LightGBM objectives** (covariance bias toward a sign prior) vs. held-out **performance** (RMSE / ROC-AUC) and **feasibility** from `pred_contrib` means.
+Rule-guided synthetic data augmentation for tabular models.
+The pipeline optimizes synthetic points to improve a combined objective of:
+
+- model performance (RMSE, lower is better), and
+- SHAP-based feasibility score from directional SCM rules (higher is better).
 
 ## Setup
 
@@ -8,13 +12,12 @@ NSGA-II over **custom LightGBM objectives** (covariance bias toward a sign prior
 pip install -r requirements.txt
 ```
 
-## Data (repo root)
+## Data
 
-| File | Module |
-|------|--------|
-| `d1namo_combined.csv` | `d1namo` |
-| `heart_disease.csv` | `heart_disease` |
-| `cancer_risk_factors.csv` | `cancer_risk` |
+Expected at repo root:
+
+- `d1namo_combined.csv`
+- `cancer patient data sets.csv`
 
 ## Run
 
@@ -22,13 +25,40 @@ pip install -r requirements.txt
 python scripts/main.py
 ```
 
-Writes `results/shapprop_run.json`. Edit `Settings` in `scripts/main.py` for `datasets`, `n_trials`, etc.
+## Outputs
 
-## Layout
+- `results/<dataset>/<dataset>_feasibility.json`
+- `results/<dataset>/<dataset>_before_feature_contrib.csv`
+- `results/<dataset>/<dataset>_after_feature_contrib.csv`
+- `images/<dataset>/...png` (SCM, beeswarm, interaction network)
 
-- `scripts/main.py` — Optuna NSGA-II, refit custom vs default objective, reports.
-- `scripts/lib.py` — train/test split, feasibility score.
-- `scripts/objkit.py` — shared MSE / logistic + sign-penalty objective factory.
-- `scripts/backend_lightgbm.py` — LightGBM fit + `pred_contrib` summary.
-- `scripts/<dataset>.py` — `load(project_root) -> (X, y)`; `TASK`, `NAME`.
-- `scripts/objectives/<dataset>.py` — `SIGNS` / `WORLD_MODEL`, `suggest_params`, `make_objective`.
+## Main Files
+
+- `scripts/main.py` — run configuration, dataset list, plotting.
+- `scripts/lib.py` — training loop, synthetic optimization, feasibility scoring.
+- `scripts/model.py` — model definition and shared parameters.
+- `scripts/d1namo.py` — d1namo dataset + SCM rules.
+- `scripts/cancer_air_pollution.py` — cancer dataset + SCM rules.
+- `scripts/visuals.py` — beeswarm, SCM graph, and interaction network plots.
+- `manuscript/main.tex` — paper draft.
+
+## What To Change
+
+- Change which datasets run: edit `DATASETS` in `scripts/main.py`.
+- Change optimization knobs (`n_trials`, `synth_points_per_round`, `objective_metric_weight`): edit `RUN_PIPELINE_KWARGS` in `scripts/main.py`.
+- Change model hyperparameters (LightGBM settings): edit `MODEL_KW` in `scripts/model.py`.
+- Change rule set for a dataset: edit `SCM_RULES` in the dataset file (for example `scripts/d1namo.py` or `scripts/cancer_air_pollution.py`).
+- Change task type (regression vs classification): edit `TASK` in the dataset file.
+- Change interaction graph edge threshold: edit `MIN_ABS_PEARSON_FOR_INTERACTION_GRAPH` in `scripts/main.py`.
+- Change synthetic-point generator backend: edit `scripts/synthesis.py`.
+- Change combined scoring logic (metric-feasibility trade-off): edit `scripts/scoring.py`.
+- Change manuscript text and figures: edit `manuscript/main.tex` (figures are read from `manuscript/images/...`).
+
+## TODO
+
+1. try out with other datasets / remove cancer dataset as it has perfect accuracy
+2. define better SCM  
+3. make smarter search space  
+4. write paper  
+5. try out implementing shapiq  
+6. do-shapley value calculation instead of optuna

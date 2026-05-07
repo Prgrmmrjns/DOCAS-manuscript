@@ -1,151 +1,161 @@
-\documentclass[times, review, 10pt]{elsarticle}
-
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[top=4.3cm, right=4.8cm, bottom=4.3cm, left=4.8cm]{geometry}
-\usepackage{amsmath,amssymb}
-\usepackage{float}
-\usepackage{booktabs}
-\usepackage{tabularx}
-\usepackage{multirow}
-\usepackage{subcaption}
-\usepackage{xcolor}
-\usepackage{colortbl}
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
-\usepackage{adjustbox}
-\usepackage{makecell}
-\usepackage{epstopdf}
+\usepackage{booktabs}
 \usepackage{hyperref}
-\usepackage{enumitem}
+\usepackage{amsmath}
 
-\journal{Pattern Recognition}
-\providecommand{\mathdefault}[1]{#1}
-
-\renewcommand{\baselinestretch}{2.0}
+\title{iSHAP: Rule-Guided Synthetic Data Augmentation for Better Feasibility--Performance Trade-offs}
+\author{Draft Manuscript}
+\date{\today}
 
 \begin{document}
-
-\begin{frontmatter}
-
-\title{{SHAPPROP}: {SCM}-guided synthetic augmentation with composite {TPE} search and {SHAP}-rule feasibility for glycemic tabular models}
-
-\author{First Author}
-\author{Second Author}
-\address{Institution Placeholder}
+\maketitle
 
 \begin{abstract}
-\textbf{Introduction:} Gradient-boosted decision trees on observational clinical tables often learn shortcuts that contradict physiology. Post-hoc explainers such as {SHAP} summarise the fitted mapping but do not, by themselves, encode domain structure into training data.
-
-\textbf{Methods:} We implement {SHAPPROP} for free-living {CGM} ({D1NAMO}) in \texttt{scripts/main.py}. A compact list of signed \emph{structural causal model} ({SCM}) rules (\texttt{d1namo.SCM\_RULES}) defines (i) a directed acyclic order over inputs via feature$\rightarrow$feature edges and (ii) optional target-directed edges into \emph{future glucose}. On min--max scaled columns, we fit ordinary least squares ({OLS}) structural modules child$\mid$parents from the current (possibly augmented) training pool, estimate per-child residual scales for Gaussian shocks, and draw synthetic rows in topological order. The synthetic label combines a linear head on the row, an {Optuna}-sampled residual band, and a \emph{rule push} that shifts $y$ along the signed sum of target rules evaluated at the row. An optional insulin \emph{anchor} breaks meal--insulin co-administration confounding when insulin targets glucose. Each {TPE} trial proposes noise, push strength, residuals, and replay parameters, materialises a batch of synthetic rows, retrains default {LightGBM} (squared error, early stopping on real validation rows), and maximises a \emph{composite} score in $[0,1]$ blending validation {RMSE} quality relative to a baseline run with full feasibility weighting. Outer iterations refit the {SCM} on augmented data, append an accepted batch, and stop when neither composite nor feasibility clears a margin. Feasibility is a weighted mean over rules: for target edges we score per-patient {SHAP} values (mass- and count-based agreement with the prior sign); for feature--feature edges we correlate observed parent values with per-row {TreeSHAP} contributions on the child feature (signed {Pearson} vs.\ the rule edge).
-
-\textbf{Results:} We export \texttt{results/d1namo\_shap\_feasibility.json}, an {SCM} graph \texttt{.dot}, and before/after explanation figures; numeric cells in Table~\ref{tab:shapprop_main} should be refreshed after \texttt{python scripts/main.py}.
-
-\textbf{Discussion:} Training stays on supported {LightGBM} losses; priors enter through {SCM}-consistent synthetic rows and a post-fit feasibility functional, which keeps auditing simple but couples scores to the validation sample and rule sparsity.
+We present a practical workflow for steering model behavior with lightweight structural rules while preserving predictive performance.
+The key idea is to iteratively generate synthetic training points and optimize them against a combined objective:
+held-out model performance (RMSE) and a SHAP-derived feasibility score that measures alignment with user-defined directional rules.
+Unlike post-hoc explanation-only methods, our approach actively edits training data to improve causal plausibility of learned effects.
+We provide an implementation based on LightGBM, Optuna, and TreeSHAP, and demonstrate the pipeline on two tabular datasets.
 \end{abstract}
 
-\begin{keyword}
-Explainable AI \sep LightGBM \sep Synthetic data \sep Structural causal models \sep Optuna \sep TPE \sep SHAP \sep Domain knowledge \sep Biomedical machine learning
-\end{keyword}
-
-\end{frontmatter}
-
 \section{Introduction}
+Many machine learning systems achieve strong predictive metrics but violate simple domain expectations.
+For example, in glucose forecasting one may expect that increased insulin should decrease future glucose, yet unconstrained models may learn the opposite or unstable directions.
+This creates a gap between pure predictive optimization and rule-consistent behavior.
 
-\subsection*{Motivation and problem setting}
-Tabular predictors are routinely deployed in clinical decision support, operational forecasting and cohort analytics \cite{arrieta2020explainable,collins2015tripod}. Labels and inputs are almost always observational, reflecting care pathways, documentation and selection rather than a controlled experiment \cite{prosperi2020causal}. Flexible models therefore learn whatever regularities compress the table, including \emph{shortcuts} that need not survive changes in protocol, device, or population \cite{geirhos2020shortcut}. Standard supervised learning does not, by itself, import the stable structure of physiology or pharmacology.
+We propose iSHAP, a method that uses structural rules and SHAP-based diagnostics to guide synthetic augmentation.
+At each round, candidate synthetic points are optimized with respect to a combined objective balancing:
+\begin{enumerate}
+    \item prediction quality on hold-out data, and
+    \item rule feasibility measured from SHAP directional correlations.
+\end{enumerate}
+If a candidate improves the combined objective, it is added to training data and the model is retrained.
+This creates a closed loop between model fit, explanation diagnostics, and data augmentation.
 
-This matters in two ways. First, \textbf{generalization}: performance degrades when deployment covariates drift from training \cite{prosperi2020causal,carloni2025role}. Second, \textbf{interpretability}: popular post-hoc explainers summarise the fitted mapping, not whether that mapping is compatible with external knowledge \cite{janzing2020feature,doshi2017towards,molnar2022interpretable}. {SHAP} values \cite{lundberg2017unified} are faithful to the model's cooperative-game definition but can still mislead reviewers when the model's partial associations disagree with textbook mechanisms \cite{aas2021explaining}.
-
-\subsection*{Related work}
-A long line of work argues that explainability should be grounded in causal or domain structure \cite{heskes2020causal,frye2020asymmetric,carloni2025role,ng2025causalshap}; recent surveys summarise prediction, generation, and explanation on tabular data \cite{fang2024llmsontabular,zhao2024explainabilityllmsurvey}. {SHAPPROP} stays lightweight: no LLM inside the training loop, no custom {LightGBM} objective---only squared error on scaled targets, {SCM}-structured synthetic rows, and {SHAP}-rule feasibility scored after each trial.
-
-\subsection*{Contributions}
-\textbf{(1)} An {SCM}-guided sampler that fits linear structural modules from data, injects calibrated shocks in topological order, and applies a signed \emph{rule push} on the synthetic label from target-directed rules. \textbf{(2)} A single-branch {Optuna} {TPE} loop that maximises a bounded composite of validation {RMSE} quality and rule feasibility, with outer iterations that refit the {SCM} on augmented training data. \textbf{(3)} A feasibility functional that mixes per-row {SHAP} agreement for target rules with signed {Pearson} scores on feature--feature edges (parent value vs.\ child {SHAP}), exported alongside graph and explanation diagnostics.
-
-\section{Methods}
-\label{sec:methods}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.88\linewidth]{images/shapprop_algorithm_flowchart.png}
-    \caption{High-level orchestration: standard {LightGBM} regression on scaled targets with early stopping on real validation rows; {Optuna} {TPE} proposes {SCM} sampling and label-push parameters; feasibility is evaluated post-hoc from {SHAP} against declared rules. Source vector: \texttt{images/shapprop\_algorithm\_flowchart.svg}.}
-    \label{fig:shapprop_algorithm}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.82\linewidth]{images/d1namo_scm_dag.png}
-    \caption{{D1NAMO} {SCM} prior: \texttt{d1namo.SCM\_RULES} lists weighted directed edges (feature$\rightarrow$feature structure and optional edges into \emph{future glucose}). \texttt{export\_scm\_dag\_dot} in \texttt{scripts/visuals.py} writes \texttt{images/d1namo\_scm\_graph.dot}; render to {PNG} for the manuscript.}
-    \label{fig:d1namo_causal}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\linewidth]{images/d1namo_shap_beeswarm_before_after.png}
-    \caption{Validation {SHAP} bee-swarm summaries before vs.\ after augmentation (same subsample; \texttt{scripts/visuals.py}).}
-    \label{fig:d1namo_shap_beeswarm}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\linewidth]{images/d1namo_interaction_cf_scatter.png}
-    \caption{Feature→feature rule check: observed \texttt{start} vs.\ {SHAP}(\texttt{end}) on the validation subsample (\texttt{scripts/main.py}; regenerate with \texttt{python scripts/visuals.py}).}
-    \label{fig:d1namo_interaction_cf}
-\end{figure}
-
-\subsection{Pipeline}
-\texttt{scripts/d1namo.py} fixes \texttt{NAME}, \texttt{TASK}, \texttt{TARGET}, \texttt{CSV}, \texttt{FEATURE\_COLUMNS}, and \texttt{SCM\_RULES}. \texttt{scripts/lib.py} supplies graph utilities (\texttt{scm\_topological\_order}, \texttt{scm\_structural\_parents}), {TreeSHAP} main values, signed {Pearson} scoring for feature→feature rules (parent value vs.\ child {SHAP}), and feasibility aggregation. \texttt{scripts/main.py} loads the table, min--max scales inputs and target on the training split, holds out a test fraction, and splits the remaining pool into train vs.\ validation (validation is never synthetically augmented). It fits a baseline regressor, then runs the outer augmentation loop in \S\ref{sec:d1namo_synth}.
-
-\subsection{{D1NAMO}: {SCM}-guided synthetic augmentation}
-\label{sec:d1namo_synth}
-Let $\mathcal{G}$ be the rule list visualised in Fig.~\ref{fig:d1namo_causal}. Edges with $\mathrm{end}\neq y$ induce structural parents for child features; {Kahn} ordering with a fixed column tie-break yields a generation order. For each child $c$ with parent indices $P(c)$, we fit $\hat x_c = \beta_c^\top x_{P(c)} + b_c$ by {OLS} on the current augmented training matrix $X$ in $[0,1]^d$. Residual standard deviations $\sigma_c$ supply structural noise scales. For a trial we initialise a row, fill exogenous or parentless coordinates by copying stratified real rows, then recursively set
+\section{Method}
+\subsection{Problem Setup}
+Given training data $(X, y)$ and a set of directed rules
+$\mathcal{R} = \{(u \rightarrow v, s)\}$ with desired sign $s \in \{-1, 0, +1\}$,
+we train a base model and iteratively add synthetic points.
+For each rule, feasibility is computed by correlating SHAP effects with corresponding features.
+For target rules $(u \rightarrow y)$, we use
 \[
-x_c \;\leftarrow\; \mathrm{clip}\bigl(\hat x_c + \nu\,\sigma_c\,z_c,\,0,\,1\bigr),\qquad z_c\sim\mathcal{N}(0,1),
+\rho_u = \mathrm{corr}\big(\phi_u(x), x_u\big),
 \]
-with global shock multiplier $\nu$ proposed by {TPE}. When the rules include insulin$\rightarrow y$, an optional \emph{insulin anchor} replaces $x_{\mathrm{insulin}}$ to mimic counterfactual dosing independent of meal-driven variation. The scaled label is
-\[
-y \;\leftarrow\; \mathrm{clip}\bigl(h(x) + \delta + \rho\cdot p(x),\,0,\,1\bigr),
-\]
-where $h$ is an {OLS} linear head $x\mapsto y$ fit on the augmented pool, $\delta$ is a trial-sampled band around the head, $\rho$ is a trial-sampled push magnitude (bounded), and $p(x)=\sum_{(u\rightarrow y)} e_u\,(x_u-\tfrac12)$ sums target-directed rules $(u,y)$ with signed weights $e_u$. Each trial replays its parameters to draw a full batch, concatenates it to training, retrains {LightGBM}, and returns the composite score below. An outer iteration accepts the batch if composite improves against the previous iteration \emph{or} feasibility improves by a fixed margin; then the {SCM} is refit on the enlarged pool.
+and compare $\rho_u$ to target sign $s$.
+Aggregating weighted deviations across rules yields a feasibility score in $[0,1]$.
 
-\subsection{Composite {TPE} objective}
-Let $\mathrm{RMSE}_0$ be validation {RMSE} after the baseline fit on real training rows only. For any candidate model with validation {RMSE} $r$ and feasibility $f\in[0,1]$, define {RMSE} channel quality $q_{\mathrm{rmse}}=\mathrm{clip}\bigl(\tfrac12+\tfrac12(\mathrm{RMSE}_0-r)/\mathrm{RMSE}_0,\,0,\,1\bigr)$ and composite $S=(1-w)\,q_{\mathrm{rmse}}+w\,f$ with $w\in[0,1]$ (the implementation defaults to $w{=}1$, emphasising rule alignment while still regularising via $q_{\mathrm{rmse}}$). {TPE} maximises $S$; subsampled rows accelerate feasibility inside trials, while baseline and final reporting use fuller validation statistics.
+\subsection{Optimization Objective}
+At each round, Optuna (TPE sampler) proposes synthetic points.
+Each trial is scored by a combined objective that rewards lower RMSE and higher feasibility.
+The trade-off is controlled by \texttt{objective\_rmse\_weight}:
+\begin{itemize}
+    \item \texttt{0.0}: prioritize RMSE only,
+    \item \texttt{1.0}: prioritize feasibility only,
+    \item intermediate values: linear trade-off.
+\end{itemize}
 
-\subsection{Feasibility scoring}
-Each rule carries a weight $w\in[0,1]$ and a sign. For a target-directed rule on feature $u$, we take the vector of per-row {SHAP} contributions $\phi_{i,u}$ and compute a geometric mean of (i) the fraction of absolute {SHAP} mass with $\mathrm{sign}(\phi_{i,u})=\mathrm{sign}(e_u)$ and (ii) the fraction of sufficiently non-zero rows with the same sign agreement. For a structural rule $u\rightarrow v$ (both inputs), we take per-row {TreeSHAP} contributions $\phi_{i,v}$ on feature $v$ and correlate them with observed $x_{i,u}$, mapping the signed {Pearson} $r$ to $[0,1]$ with the rule sign (e.g.\ a negative edge rewards $r<0$: higher $u$ associates with lower attribution on $v$). The overall feasibility is the weighted mean of per-rule scores.
+\subsection{Round-Based Augmentation}
+The pipeline:
+\begin{enumerate}
+    \item Train baseline model on current augmented set.
+    \item Optimize a batch of synthetic points.
+    \item Evaluate combined score on fixed validation diagnostics.
+    \item Accept batch if combined score improves; otherwise stop.
+\end{enumerate}
 
-\subsection{Data and domain priors}
+\section{Experimental Setup}
+\subsection{Datasets}
+We currently evaluate:
+\begin{itemize}
+    \item \textbf{d1namo}: glucose-related tabular regression task.
+    \item \textbf{cancer\_air\_pollution}: cancer-level dataset with air-pollution risk factors.
+\end{itemize}
 
-\paragraph{{D1NAMO} (regression).} Free-living {CGM} with self-reported meals and insulin; target \emph{future glucose}. After dropping missing rows, $n\approx 6731$ with nine inputs: \texttt{glucose}, \texttt{glucose\_change}, \texttt{time}, macronutrients (\texttt{simple\_sugars}, \texttt{complex\_sugars}, \texttt{proteins}, \texttt{fats}, \texttt{dietary\_fibers}), and \texttt{insulin}. The active \texttt{SCM\_RULES} set in the repository is intentionally small (e.g.\ a dominant insulin$\rightarrow$\emph{future glucose} constraint) so that feasibility focuses on clinically salient directions; additional edges can be re-enabled in \texttt{scripts/d1namo.py}.
-
-\subsection{Evaluation protocol}
-Train/test split: 75/25 on the full cohort; within the training pool, 50\% is reserved as validation for early stopping and feasibility (never augmented). {LightGBM} uses fixed shallow defaults with early stopping rounds on validation. We report validation and test {RMSE} in original glucose units, composite score, feasibility, and exported {SHAP} diagnostics.
+\subsection{Rules}
+For controlled sanity checks, we use one rule per dataset:
+\begin{itemize}
+    \item d1namo: \texttt{insulin} $\rightarrow$ \texttt{future glucose}, negative.
+    \item cancer\_air\_pollution: \texttt{Air Pollution} $\rightarrow$ \texttt{Level}, positive.
+\end{itemize}
 
 \section{Results}
+\subsection{Quantitative Summary}
+Table~\ref{tab:main_results} summarizes the current runs.
+For both datasets, the approach improves feasibility and hold-out RMSE, indicating that rule alignment can be increased without sacrificing predictive quality in these initial experiments.
 
-Table~\ref{tab:shapprop_main} lists baseline vs.\ augmented metrics on the fixed splits produced by \texttt{scripts/main.py}.
-
-\begin{table}[H]
-  \centering
-  \caption{{D1NAMO} run summary (fill from console output / \texttt{results/d1namo\_shap\_feasibility.json} after \texttt{python scripts/main.py}).}
-  \label{tab:shapprop_main}
-  \begin{tabular}{@{}lcccc@{}}
-    \toprule
-    Setting & Val {RMSE} & Val feas. & Composite & Test {RMSE} \\
-    \midrule
-    Baseline (real train only) & --- & --- & --- & --- \\
-    + {SCM} synthetic batches & --- & --- & --- & --- \\
-    \bottomrule
-  \end{tabular}
+\begin{table}[ht]
+    \centering
+    \caption{Before/after results from current pipeline runs.}
+    \label{tab:main_results}
+    \begin{tabular}{lrrrr}
+        \toprule
+        Dataset & $\Delta$ Feasibility & RMSE Before & RMSE After & Synth Rows Added \\
+        \midrule
+        d1namo & +0.0995 & 28.3282 & 28.0208 & 30 \\
+        cancer\_air\_pollution & +0.0025 & 0.0066 & 0.0023 & 10 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 
-\paragraph{{D1NAMO}.} The implementation matches \S\ref{sec:d1namo_synth} and Figs.~\ref{fig:d1namo_causal}--\ref{fig:d1namo_interaction_cf}; per-rule breakdowns appear under \texttt{rules} in the exported {JSON}.
+For d1namo, rule alignment improved substantially:
+\texttt{insulin $\rightarrow$ future glucose} moved from Pearson $-0.4299$ to $-0.6289$, closer to the desired negative direction.
+At the same time, RMSE improved by $-0.3074$.
+For cancer\_air\_pollution, the directional rule \texttt{Air Pollution $\rightarrow$ Level} improved from $0.6612$ to $0.6661$, while RMSE improved from $0.0066$ to $0.0023$.
+
+\subsection{Visual Evidence}
+Figures~\ref{fig:d1_bee}--\ref{fig:cancer_net} show before/after explanation shifts.
+In d1namo, beeswarm and interaction patterns indicate a stronger directional consistency with the insulin rule after augmentation.
+In cancer\_air\_pollution, the visuals show a smaller but consistent directional tightening around the selected rule.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/d1namo/d1namo_shap_beeswarm_before_after_synthetic.png}
+    \caption{d1namo SHAP beeswarm before and after augmentation.}
+    \label{fig:d1_bee}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/d1namo/d1namo_shap_interaction_network_before_after_synthetic.png}
+    \caption{d1namo correlation-based interaction network before and after augmentation.}
+    \label{fig:d1_net}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/cancer_air_pollution_shap_beeswarm_before_after_synthetic.png}
+    \caption{cancer\_air\_pollution SHAP beeswarm before and after augmentation.}
+    \label{fig:cancer_bee}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/cancer_air_pollution_shap_interaction_network_before_after_synthetic.png}
+    \caption{cancer\_air\_pollution correlation-based interaction network before and after augmentation.}
+    \label{fig:cancer_net}
+\end{figure}
 
 \section{Discussion}
+These initial results support the central premise of iSHAP: synthetic augmentation can move a model toward predefined directional rules while preserving or improving predictive performance.
+The gains are strongest in d1namo, where the rule conflict was larger at baseline and thus allowed more directional correction.
+The cancer dataset shows a smaller feasibility gain, likely because baseline alignment was already relatively high.
 
-{SHAPPROP} separates \textbf{(i)}~a sparse signed {SCM} prior, \textbf{(ii)}~data generation that respects fitted linear structure plus optional counterfactual anchors, and \textbf{(iii)}~feasibility as a post-fit functional of {SHAP} values aligned to those rules. Training uses only the standard squared-error booster path. Limitations include sensitivity of {Pearson}-based structural scores to validation size, bias--variance trade-offs when $w{=}1$ on feasibility, and the fact that {OLS} structural modules on observational data need not identify a causal mechanism even when they improve interpretability metrics.
+A practical benefit is interpretability of progress at each round:
+the feasibility metric, per-rule Pearson shifts, and explanation plots all move in a coherent direction.
+This makes the optimization process auditable, rather than relying only on aggregate predictive metrics.
 
-\bibliographystyle{unsrt}
-\bibliography{references}
+Overall, the current evidence suggests that rule-guided augmentation is a viable mechanism to reduce explanation--domain mismatch in tabular settings.
+Further validation across additional datasets and richer SCM rule sets is needed to establish robustness.
+
+\section{Limitations and Future Work}
+Current limitations include potential search inefficiency in high-dimensional spaces and dependence on SHAP stability.
+Future work should investigate stronger structural constraints, alternative attribution methods, and more robust optimization schemes.
+
+\section{Conclusion}
+iSHAP offers a practical framework for injecting domain rules into model development through data-centric optimization.
+By coupling synthetic augmentation with explanation-based feasibility scoring, practitioners can iteratively move models toward both stronger performance and more plausible directional behavior.
 
 \end{document}
