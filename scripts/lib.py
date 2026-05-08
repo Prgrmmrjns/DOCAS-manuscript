@@ -18,7 +18,7 @@ import shap
 from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.model_selection import train_test_split
 from model import make_model
-from scoring import CombinedScorer
+from scoring import CombinedScorer, compute_feasibility
 from synthesis import OptunaTPESyntheticOptimizer, uniform_bounds_from_training
 
 class SCMRule(TypedDict):
@@ -83,16 +83,24 @@ class iSHAP:
         for key in sorted(set(B) | set(A)):
             b, a = B.get(key, {}), A.get(key, {})
             br, ar_ = b.get("pearson_r"), a.get("pearson_r")
+            dcb, dca = b.get("do_effect_corr"), a.get("do_effect_corr")
             out.append(
                 {
                     "rule": key,
                     "weight": a.get("weight", b.get("weight")),
                     "ideal_pearson": a.get("ideal_pearson", b.get("ideal_pearson")),
+                    # pearson_r_* stores the feasibility effect score used in optimization
+                    # (for target rules: monotonic signed score in [-1,1]; not Pearson r).
                     "pearson_r_before": br,
                     "pearson_r_after": ar_,
                     "pearson_r_delta_after_minus_before": None
                     if br is None or ar_ is None
                     else round(float(ar_) - float(br), 4),
+                    "do_effect_corr_before": dcb,
+                    "do_effect_corr_after": dca,
+                    "do_effect_corr_delta_after_minus_before": None
+                    if dcb is None or dca is None
+                    else round(float(dca) - float(dcb), 4),
                 }
             )
         return out
@@ -108,63 +116,15 @@ class iSHAP:
         random_state: int = 42,
         max_samples: int = 200,
     ) -> dict[str, Any]:
-        t = str(target)
-        col_idx = {c: i for i, c in enumerate(cols)}
-        n = min(int(max_samples), len(X_df))
-        if len(X_df) > n:
-            rng = np.random.default_rng(int(random_state))
-            idx = rng.choice(len(X_df), size=n, replace=False)
-            Xs = X_df.iloc[idx].copy().reset_index(drop=True)
-        else:
-            Xs = X_df.reset_index(drop=True)
-        ex = shap.TreeExplainer(model)
-        try:
-            sv = ex.shap_values(Xs, check_additivity=False)
-        except TypeError:
-            sv = ex.shap_values(Xs)
-        if isinstance(sv, list):
-            sv = np.asarray(sv[0])
-        sv = np.asarray(sv, dtype=float)
-        if sv.ndim == 1:
-            sv = sv.reshape(len(Xs), -1)
-        sv = np.asarray(sv, dtype=np.float64)
-        items: list[dict[str, Any]] = []
-        w_sum = dev_sum = 0.0
-        for r in rules:
-            edge = float(r["edge"])
-            u, v = str(r["start"]), str(r["end"])
-            edge_mag = abs(edge)
-            w = (edge_mag if edge_mag > 1e-12 else 1.0) * (0.55 if v != t else 1.0)
-            ideal = 0.0 if edge_mag <= 1e-12 else (1.0 if edge > 0 else -1.0)
-            if v == t:
-                if u not in col_idx:
-                    continue
-                rr = pearson_r(sv[:, col_idx[u]], Xs[u].to_numpy(np.float64, copy=False))
-                key = f"{u}->{t}"
-            else:
-                if u not in col_idx or v not in col_idx:
-                    continue
-                rr = pearson_r(Xs[u].to_numpy(np.float64, copy=False), sv[:, col_idx[v]])
-                key = f"{u}->{v}"
-            if not np.isfinite(rr):
-                dev, ro, diff = 2.0, None, None
-            else:
-                ro = float(rr)
-                dev = abs(ro - ideal)
-                diff = round(ro - ideal, 4)
-            w_sum += w
-            dev_sum += w * dev
-            items.append(
-                {
-                    "rule": key,
-                    "weight": round(w, 4),
-                    "pearson_r": None if ro is None else round(ro, 4),
-                    "ideal_pearson": ideal,
-                    "pearson_r_diff": diff,
-                }
-            )
-        feasibility = 0.5 if w_sum < 1e-18 else float(np.clip(1.0 - dev_sum / w_sum / 2.0, 0.0, 1.0))
-        return {"feasibility_score_0_1": round(feasibility, 4), "rules": items}
+        return compute_feasibility(
+            model,
+            X_df,
+            cols,
+            rules,
+            target,
+            random_state=random_state,
+            max_samples=max_samples,
+        )
 
     @staticmethod
     def regression_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -359,7 +319,7 @@ class iSHAP:
                 "delta_metric_holdout": round(metric_after - metric_before, 6),
             },
         }
-        with open(os.path.join(results_dir, f"{name}_feasibility.json"), "w") as fp:
+        with open(os.path.join(results_dir, "feasibility.json"), "w") as fp:
             json.dump(payload, fp, indent=2)
 
         return {

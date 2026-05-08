@@ -1,0 +1,59 @@
+{
+  "feasibility": {
+    "before": 0.8937,
+    "after": 0.9987,
+    "delta_after_minus_before": 0.105
+  },
+  "feasibility_per_added_datapoint": [
+    {
+      "n_added_synth_rows": 20,
+      "metric_holdout": 1.0,
+      "feasibility_score_0_1": 0.9939,
+      "combined_score": 0.99695
+    },
+    {
+      "n_added_synth_rows": 40,
+      "metric_holdout": 1.0,
+      "feasibility_score_0_1": 0.995,
+      "combined_score": 0.9975
+    },
+    {
+      "n_added_synth_rows": 60,
+      "metric_holdout": 1.0,
+      "feasibility_score_0_1": 0.9976,
+      "combined_score": 0.9988
+    },
+    {
+      "n_added_synth_rows": 80,
+      "metric_holdout": 1.0,
+      "feasibility_score_0_1": 0.9981,
+      "combined_score": 0.99905
+    },
+    {
+      "n_added_synth_rows": 100,
+      "metric_holdout": 1.0,
+      "feasibility_score_0_1": 0.9987,
+      "combined_score": 0.99935
+    }
+  ],
+  "rule_components": [
+    {
+      "rule": "Air Pollution->Level",
+      "weight": 1.0,
+      "ideal_pearson": 1.0,
+      "pearson_r_before": 0.7873,
+      "pearson_r_after": 0.9974,
+      "pearson_r_delta_after_minus_before": 0.2101,
+      "do_effect_corr_before": 0.7198,
+      "do_effect_corr_after": 0.9947,
+      "do_effect_corr_delta_after_minus_before": 0.2749
+    }
+  ],
+  "holdout_metric": {
+    "metric_name": "accuracy",
+    "n_synthetic_rows_added": 100,
+    "metric_holdout_before_synthetic": 1.0,
+    "metric_holdout_after_synthetic": 1.0,
+    "delta_metric_holdout": 0.0
+  }
+}

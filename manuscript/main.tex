@@ -15,46 +15,54 @@
 \begin{abstract}
 We present a practical workflow for steering model behavior with lightweight structural rules while preserving predictive performance.
 The key idea is to iteratively generate synthetic training points and optimize them against a combined objective:
-held-out model performance (RMSE) and a SHAP-derived feasibility score that measures alignment with user-defined directional rules.
-Unlike post-hoc explanation-only methods, our approach actively edits training data to improve causal plausibility of learned effects.
-We provide an implementation based on LightGBM, Optuna, and TreeSHAP, and demonstrate the pipeline on two tabular datasets.
+hold-out task performance (root mean squared error for regression, accuracy for multi-class classification) and a feasibility score grounded in \emph{do}-interventions on the fitted model, not correlation with SHAP values alone.
+Unlike post-hoc explanation-only methods, our approach actively edits training data to align predicted interventional effects with user-specified directional rules.
+We provide an implementation based on LightGBM, Optuna (TPE), and TreeSHAP only for optional plots, and demonstrate the pipeline on two tabular datasets.
 \end{abstract}
 
 \section{Introduction}
 Many machine learning systems achieve strong predictive metrics but violate simple domain expectations.
-For example, in glucose forecasting one may expect that increased insulin should decrease future glucose, yet unconstrained models may learn the opposite or unstable directions.
+For example, in glucose forecasting one may expect that increased insulin should decrease future glucose, yet unconstrained models may learn unstable or non-monotone interventional curves.
 This creates a gap between pure predictive optimization and rule-consistent behavior.
 
-We propose iSHAP, a method that uses structural rules and SHAP-based diagnostics to guide synthetic augmentation.
+We propose iSHAP, a method that uses structural rules and model-based \emph{do}-effects to guide synthetic augmentation.
 At each round, candidate synthetic points are optimized with respect to a combined objective balancing:
 \begin{enumerate}
-    \item prediction quality on hold-out data, and
-    \item rule feasibility measured from SHAP directional correlations.
+    \item prediction quality on hold-out data (task-appropriate metric), and
+    \item rule feasibility from interventional summaries of the model response.
 \end{enumerate}
 If a candidate improves the combined objective, it is added to training data and the model is retrained.
-This creates a closed loop between model fit, explanation diagnostics, and data augmentation.
+This creates a closed loop between model fit, interventional diagnostics, and data augmentation.
 
 \section{Method}
 \subsection{Problem Setup}
-Given training data $(X, y)$ and a set of directed rules
-$\mathcal{R} = \{(u \rightarrow v, s)\}$ with desired sign $s \in \{-1, 0, +1\}$,
-we train a base model and iteratively add synthetic points.
-For each rule, feasibility is computed by correlating SHAP effects with corresponding features.
-For target rules $(u \rightarrow y)$, we use
+Given training data $(X, y)$ and directed rules
+$\mathcal{R} = \{(u \rightarrow v, s)\}$ with desired qualitative sign $s \in \{-1, 0, +1\}$ (negative, none, positive),
+we train a predictive model and evaluate rule consistency under interventions implied by the model map.
+
+\paragraph{Rules to the target.}
+For a rule $(u \rightarrow y)$, fix a validation covariate matrix $X$ and sweep a grid $g$ over the observed range of feature $u$.
+Define the interventional prediction curve
 \[
-\rho_u = \mathrm{corr}\big(\phi_u(x), x_u\big),
+  \bar{f}(g) \;=\; \frac{1}{n}\sum_{i=1}^n f\big(X^{(i)}_{\neg u},\, u{=}g\big),
 \]
-and compare $\rho_u$ to target sign $s$.
-Aggregating weighted deviations across rules yields a feasibility score in $[0,1]$.
+where row $i$ is copied and only column $u$ is set to $g$.
+We summarize alignment with the desired monotone direction (higher $u$ should raise or lower $\bar{f}$ depending on $s$) using a monotone score derived from the consecutive differences of $\bar{f}(g)$ along the grid (full agreement with the desired direction yields the strongest feasibility contribution).
+A Pearson correlation between $g$ and $\bar{f}(g)$ is retained as a diagnostic correlate of global slope but feasibility optimization emphasizes monotone agreement with the rule sign.
+
+\paragraph{Rules between features.}
+For $(u \rightarrow v)$ with both $u,v$ among inputs, we use the partial correlation between $X_u$ and $X_v$ after linearly controlling for all other observed features---a compact backdoor-style adjustment when the full causal graph is unknown.
+
+Aggregating weighted deviations of each rule's summary from the ideal sign yields a feasibility score in $[0,1]$.
 
 \subsection{Optimization Objective}
 At each round, Optuna (TPE sampler) proposes synthetic points.
-Each trial is scored by a combined objective that rewards lower RMSE and higher feasibility.
-The trade-off is controlled by \texttt{objective\_rmse\_weight}:
+Each trial is scored by a combined objective that rewards better hold-out performance and higher feasibility.
+The trade-off is controlled by \texttt{objective\_metric\_weight} in code:
 \begin{itemize}
-    \item \texttt{0.0}: prioritize RMSE only,
+    \item \texttt{0.0}: prioritize hold-out performance only (regression: lower root mean squared error; classification: higher accuracy),
     \item \texttt{1.0}: prioritize feasibility only,
-    \item intermediate values: linear trade-off.
+    \item intermediate values: linear trade-off in the implemented scalar.
 \end{itemize}
 
 \subsection{Round-Based Augmentation}
@@ -70,92 +78,108 @@ The pipeline:
 \subsection{Datasets}
 We currently evaluate:
 \begin{itemize}
-    \item \textbf{d1namo}: glucose-related tabular regression task.
-    \item \textbf{cancer\_air\_pollution}: cancer-level dataset with air-pollution risk factors.
+    \item \textbf{d1namo}: glucose-related tabular \emph{regression}; hold-out metric is root mean squared prediction error (reported as \texttt{error} in outputs).
+    \item \textbf{cancer\_air\_pollution}: cancer risk \emph{classification} with ordinal labels mapped to classes; hold-out metric is classification \emph{accuracy}.
 \end{itemize}
 
 \subsection{Rules}
 For controlled sanity checks, we use one rule per dataset:
 \begin{itemize}
-    \item d1namo: \texttt{insulin} $\rightarrow$ \texttt{future glucose}, negative.
+    \item d1namo: \texttt{insulin} $\rightarrow$ \texttt{future glucose}, negative (higher insulin should correspond to lower predicted future glucose along the do-curve).
     \item cancer\_air\_pollution: \texttt{Air Pollution} $\rightarrow$ \texttt{Level}, positive.
 \end{itemize}
 
 \section{Results}
 \subsection{Quantitative Summary}
-Table~\ref{tab:main_results} summarizes the current runs.
-For both datasets, the approach improves feasibility and hold-out RMSE, indicating that rule alignment can be increased without sacrificing predictive quality in these initial experiments.
+Table~\ref{tab:main_results} summarizes a recent pipeline run exported to \texttt{results/<dataset>/feasibility.json}.
+Performance and feasibility definitions differ by task as described above; the feasibility column aggregates interventional alignment for target rules (and partial correlations for feature-feature rules when present).
 
 \begin{table}[ht]
     \centering
-    \caption{Before/after results from current pipeline runs.}
+    \caption{Before/after summary (representative run; re-run scripts to refresh numbers).}
     \label{tab:main_results}
-    \begin{tabular}{lrrrr}
+    \begin{tabular}{llrrrr}
         \toprule
-        Dataset & $\Delta$ Feasibility & RMSE Before & RMSE After & Synth Rows Added \\
+        Dataset & Hold-out metric & Before & After & $\Delta$ Feas. & Synth rows \\
         \midrule
-        d1namo & +0.0995 & 28.3282 & 28.0208 & 30 \\
-        cancer\_air\_pollution & +0.0025 & 0.0066 & 0.0023 & 10 \\
+        d1namo & RMSE (\texttt{error}) & 28.328 & 28.575 & +0.198 & 80 \\
+        cancer\_air\_pollution & Accuracy & 1.000 & 1.000 & +0.137 & 60 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-For d1namo, rule alignment improved substantially:
-\texttt{insulin $\rightarrow$ future glucose} moved from Pearson $-0.4299$ to $-0.6289$, closer to the desired negative direction.
-At the same time, RMSE improved by $-0.3074$.
-For cancer\_air\_pollution, the directional rule \texttt{Air Pollution $\rightarrow$ Level} improved from $0.6612$ to $0.6661$, while RMSE improved from $0.0066$ to $0.0023$.
+For d1namo, feasibility optimizes a \emph{monotonic signed} summary for target rules (\texttt{feasibility.json} \texttt{pearson\_r\_*} rows store that score; key name is historical). Pearson $\rho$ between grid and curve (\texttt{do\_effect\_corr\_*} in the feasibility blob; \texttt{before\_do\_corr} / \texttt{after\_do\_corr} in the do-curve file) may fall while feasibility still climbs. Archived JSON carries both \texttt{monotonic\_signed\_score}-style summaries and step-alignment fractions.
+For cancer\_air\_pollution, the rule summary moved from $0.720$ toward $0.993$ while hold-out accuracy remained at perfect accuracy on the evaluated split.
 
-\subsection{Visual Evidence}
-Figures~\ref{fig:d1_bee}--\ref{fig:cancer_net} show before/after explanation shifts.
-In d1namo, beeswarm and interaction patterns indicate a stronger directional consistency with the insulin rule after augmentation.
-In cancer\_air\_pollution, the visuals show a smaller but consistent directional tightening around the selected rule.
+\subsection{Visual Evidence: SHAP and interaction views}
+Figures~\ref{fig:d1_bee}--\ref{fig:cancer_net} show before/after SHAP beeswarm and correlation-based interaction networks for context.
+They are not the primary feasibility signal; the interventional curves below are.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\linewidth]{images/d1namo/d1namo_shap_beeswarm_before_after_synthetic.png}
+    \IfFileExists{images/d1namo/shap_beeswarm_before_after_synthetic.png}
+    {\includegraphics[width=0.9\linewidth]{images/d1namo/shap_beeswarm_before_after_synthetic.png}}
+    {\includegraphics[width=0.9\linewidth]{images/d1namo/d1namo_shap_beeswarm_before_after_synthetic.png}}
     \caption{d1namo SHAP beeswarm before and after augmentation.}
     \label{fig:d1_bee}
 \end{figure}
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\linewidth]{images/d1namo/d1namo_shap_interaction_network_before_after_synthetic.png}
+    \IfFileExists{images/d1namo/shap_interaction_network_before_after_synthetic.png}
+    {\includegraphics[width=0.9\linewidth]{images/d1namo/shap_interaction_network_before_after_synthetic.png}}
+    {\includegraphics[width=0.9\linewidth]{images/d1namo/d1namo_shap_interaction_network_before_after_synthetic.png}}
     \caption{d1namo correlation-based interaction network before and after augmentation.}
     \label{fig:d1_net}
 \end{figure}
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/cancer_air_pollution_shap_beeswarm_before_after_synthetic.png}
+    \IfFileExists{images/cancer_air_pollution/shap_beeswarm_before_after_synthetic.png}
+    {\includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/shap_beeswarm_before_after_synthetic.png}}
+    {\includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/cancer_air_pollution_shap_beeswarm_before_after_synthetic.png}}
     \caption{cancer\_air\_pollution SHAP beeswarm before and after augmentation.}
     \label{fig:cancer_bee}
 \end{figure}
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/cancer_air_pollution_shap_interaction_network_before_after_synthetic.png}
+    \IfFileExists{images/cancer_air_pollution/shap_interaction_network_before_after_synthetic.png}
+    {\includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/shap_interaction_network_before_after_synthetic.png}}
+    {\includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/cancer_air_pollution_shap_interaction_network_before_after_synthetic.png}}
     \caption{cancer\_air\_pollution correlation-based interaction network before and after augmentation.}
     \label{fig:cancer_net}
 \end{figure}
 
+\subsection{Interventional (\emph{do}) curves}
+Figure~\ref{fig:do_d1namo} and Figure~\ref{fig:do_cancer} plot $\bar{f}(g)$ versus intervention level $g$ for each target-directed rule before and after augmentation.
+Numeric grids and predictions for the plotted curves live only under \texttt{results/<dataset>/} as \texttt{do\_curve\_before\_after.json} (long CSV alongside). Metrics there use the same intervention grid subsample as \texttt{compute\_feasibility} (avoid comparing a finer grid to coarse optimization summaries).
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.92\linewidth]{images/d1namo/do_curve_before_after.png}
+    \caption{d1namo: interventional mean prediction vs.\ fixed $u$ for the insulin rule (before vs.\ after augmentation).}
+    \label{fig:do_d1namo}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.92\linewidth]{images/cancer_air_pollution/do_curve_before_after.png}
+    \caption{cancer\_air\_pollution: same construction for Air Pollution $\rightarrow$ Level (classification model; $\bar{f}$ is mean predicted score / class logits aggregated as in the codebase).}
+    \label{fig:do_cancer}
+\end{figure}
+
 \section{Discussion}
-These initial results support the central premise of iSHAP: synthetic augmentation can move a model toward predefined directional rules while preserving or improving predictive performance.
-The gains are strongest in d1namo, where the rule conflict was larger at baseline and thus allowed more directional correction.
-The cancer dataset shows a smaller feasibility gain, likely because baseline alignment was already relatively high.
+Interventional feasibility makes the notion of ``insulin lowers future glucose'' directly testable on the fitted predictor, independently of beeswarm correlations.
+Splitting hold-out metrics by task (RMSE vs.\ accuracy) avoids mis-stating performance on the cancer benchmark.
+The stored do-curve tables allow external reproduction and alternative plot styles without re-fitting.
 
-A practical benefit is interpretability of progress at each round:
-the feasibility metric, per-rule Pearson shifts, and explanation plots all move in a coherent direction.
-This makes the optimization process auditable, rather than relying only on aggregate predictive metrics.
-
-Overall, the current evidence suggests that rule-guided augmentation is a viable mechanism to reduce explanation--domain mismatch in tabular settings.
-Further validation across additional datasets and richer SCM rule sets is needed to establish robustness.
+Current limitations include dependence on the choice of validation rows for the do-sweep, grid resolution, and the strength of partial-correlation surrogates for non-target rules when the true graph is unknown.
 
 \section{Limitations and Future Work}
-Current limitations include potential search inefficiency in high-dimensional spaces and dependence on SHAP stability.
-Future work should investigate stronger structural constraints, alternative attribution methods, and more robust optimization schemes.
+Future work should investigate richer SCM-based adjustment sets for feature--feature rules, adaptive grids, and joint multi-rule interventional constraints.
 
 \section{Conclusion}
-iSHAP offers a practical framework for injecting domain rules into model development through data-centric optimization.
-By coupling synthetic augmentation with explanation-based feasibility scoring, practitioners can iteratively move models toward both stronger performance and more plausible directional behavior.
+iSHAP couples data-centric synthetic search with interventional and partial-correlation feasibility so practitioners can trade predictive metrics against rule-shaped model behavior with auditable curves and saved numeric artifacts.
 
 \end{document}

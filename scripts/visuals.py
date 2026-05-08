@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,8 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import shap
+
+from scoring import _monotonic_signed_score
 
 FEATURE_RING_RADIUS = 1.35
 INTERACTION_EDGE_MIN_ABS = 1e-8
@@ -302,6 +305,156 @@ def _shap_explanation_for_plot(model: Any, X_df: pd.DataFrame) -> shap.Explanati
         data=X_df.values.astype(float),
         feature_names=[str(c) for c in X_df.columns],
     )
+
+
+def _do_curve_for_target_rule(
+    model: Any,
+    X_np: np.ndarray,
+    feature_idx: int,
+    *,
+    grid_size: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute (grid, mean prediction) for E[Y | do(X_u = g)] across the column range."""
+    u_col = X_np[:, feature_idx]
+    u_min = float(np.nanmin(u_col))
+    u_max = float(np.nanmax(u_col))
+    if not np.isfinite(u_min) or not np.isfinite(u_max) or u_max <= u_min + 1e-12:
+        return np.array([], dtype=np.float64), np.array([], dtype=np.float64)
+    grid = np.linspace(u_min, u_max, int(max(2, grid_size)), dtype=np.float64)
+    avg = np.empty(grid.size, dtype=np.float64)
+    for k, g in enumerate(grid):
+        Xint = X_np.copy()
+        Xint[:, feature_idx] = g
+        preds = np.asarray(model.predict(Xint), dtype=np.float64)
+        avg[k] = float(np.mean(preds)) if preds.size else float("nan")
+    return grid, avg
+
+
+def save_do_curve_before_after_figure(
+    *,
+    cols: list[str],
+    target_name: str,
+    rules: list[dict],
+    model_before: Any,
+    model_after: Any,
+    X_eval_df: pd.DataFrame,
+    out_path: str | Path,
+    out_data_path: str | Path | None = None,
+    grid_size: int = 11,
+    max_samples: int = 200,
+    random_state: int = 42,
+) -> Path | None:
+    """Side-by-side do-effect curves for every rule that points to the target.
+
+    For each rule (u -> target, edge), plot E[Y | do(X_u = g)] across u's range
+    for both models on the same axes. Slope direction directly reflects whether
+    the model's interventional behavior matches the rule sign.
+    """
+    out_path = Path(out_path)
+    target_rules = [r for r in rules if str(r.get("end")) == str(target_name) and str(r.get("start")) in cols]
+    if not target_rules:
+        return None
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    rng = np.random.default_rng(int(random_state))
+    n = min(int(max_samples), len(X_eval_df))
+    idx = rng.choice(len(X_eval_df), size=n, replace=False) if len(X_eval_df) > n else np.arange(len(X_eval_df))
+    Xs = X_eval_df.iloc[idx][cols].copy().reset_index(drop=True)
+    X_np = Xs.to_numpy(dtype=np.float64, copy=False)
+    col_idx = {c: i for i, c in enumerate(cols)}
+
+    n_rules = len(target_rules)
+    n_cols_grid = min(2, n_rules)
+    n_rows_grid = int(np.ceil(n_rules / n_cols_grid))
+    fig, axes = plt.subplots(
+        n_rows_grid, n_cols_grid,
+        figsize=(7.0 * n_cols_grid, 4.4 * n_rows_grid),
+        constrained_layout=True,
+        squeeze=False,
+    )
+    fig.patch.set_facecolor("#fafafa")
+    curve_payload: list[dict[str, Any]] = []
+
+    for k, r in enumerate(target_rules):
+        ax = axes[k // n_cols_grid][k % n_cols_grid]
+        ax.set_facecolor("#fafafa")
+        u = str(r["start"])
+        edge = float(r.get("edge", 0.0))
+        i_u = col_idx[u]
+
+        grid_b, avg_b = _do_curve_for_target_rule(model_before, X_np, i_u, grid_size=grid_size)
+        grid_a, avg_a = _do_curve_for_target_rule(model_after, X_np, i_u, grid_size=grid_size)
+
+        ideal_dir = "+" if edge > 0 else ("-" if edge < 0 else "0")
+        if grid_b.size:
+            ax.plot(grid_b, avg_b, color="#7f8c8d", linewidth=2.2, marker="o", markersize=4, label="before")
+        if grid_a.size:
+            ax.plot(grid_a, avg_a, color="#c0392b", linewidth=2.2, marker="o", markersize=4, label="after")
+
+        ax.set_xlabel(u)
+        ax.set_ylabel(f"E[ {target_name} | do({u}=g) ]")
+        ax.set_title(f"{u} -> {target_name}   (rule edge {ideal_dir})", fontsize=11)
+        ax.grid(True, color="#ddd", linewidth=0.6)
+        ax.legend(loc="best", fontsize=9)
+
+        steps_ok_before = (
+            float(np.mean(np.diff(avg_b) * (1.0 if edge >= 0 else -1.0) >= -1e-12)) if avg_b.size > 1 else float("nan")
+        )
+        steps_ok_after = (
+            float(np.mean(np.diff(avg_a) * (1.0 if edge >= 0 else -1.0) >= -1e-12)) if avg_a.size > 1 else float("nan")
+        )
+        ms_before = float(_monotonic_signed_score(avg_b)) if avg_b.size > 1 else float("nan")
+        ms_after = float(_monotonic_signed_score(avg_a)) if avg_a.size > 1 else float("nan")
+        grid_serial = grid_b.tolist() if grid_b.size else grid_a.tolist()
+        curve_payload.append(
+            {
+                "rule": f"{u}->{target_name}",
+                "edge": edge,
+                "grid": grid_serial,
+                "before_avg_pred": avg_b.tolist(),
+                "after_avg_pred": avg_a.tolist(),
+                "before_do_corr": None if not grid_b.size else float(_pearson_safe(grid_b, avg_b)),
+                "after_do_corr": None if not grid_a.size else float(_pearson_safe(grid_a, avg_a)),
+                "before_steps_aligned_fraction": None if not np.isfinite(steps_ok_before) else steps_ok_before,
+                "after_steps_aligned_fraction": None if not np.isfinite(steps_ok_after) else steps_ok_after,
+                "before_monotonic_signed_score": None if not np.isfinite(ms_before) else ms_before,
+                "after_monotonic_signed_score": None if not np.isfinite(ms_after) else ms_after,
+            }
+        )
+
+    for k in range(n_rules, n_rows_grid * n_cols_grid):
+        ax = axes[k // n_cols_grid][k % n_cols_grid]
+        ax.set_visible(False)
+
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    payload_obj: dict[str, Any] = {"target": target_name, "rules": curve_payload}
+    if out_data_path is not None:
+        out_data_path = Path(out_data_path)
+        out_data_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_data_path, "w") as fp:
+            json.dump(payload_obj, fp, indent=2)
+        rows: list[dict[str, Any]] = []
+        for p in curve_payload:
+            g = p["grid"]
+            b = p["before_avg_pred"]
+            a = p["after_avg_pred"]
+            for i in range(min(len(g), len(b), len(a))):
+                rows.append(
+                    {
+                        "rule": p["rule"],
+                        "grid_value": g[i],
+                        "before_avg_pred": b[i],
+                        "after_avg_pred": a[i],
+                    }
+                )
+        if rows:
+            pd.DataFrame(rows).to_csv(out_data_path.with_suffix(".csv"), index=False)
+    else:
+        default_json = out_path.with_suffix(".json")
+        with open(default_json, "w") as fp:
+            json.dump(payload_obj, fp, indent=2)
+    return out_path
 
 
 def save_shap_beeswarm_before_after_figure(

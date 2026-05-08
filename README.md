@@ -27,9 +27,9 @@ python scripts/main.py
 
 ## Outputs
 
-- `results/<dataset>/<dataset>_feasibility.json`
-- `results/<dataset>/<dataset>_before_feature_contrib.csv`
-- `results/<dataset>/<dataset>_after_feature_contrib.csv`
+- `results/<dataset>/feasibility.json`
+- `results/<dataset>/before_feature_contrib.csv`
+- `results/<dataset>/after_feature_contrib.csv`
 - `images/<dataset>/...png` (SCM, beeswarm, interaction network)
 
 ## Main Files
