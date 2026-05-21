@@ -1,185 +1,78 @@
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{hyperref}
+\usepackage{float}
 \usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{subcaption}
 
-\title{iSHAP: Rule-Guided Synthetic Data Augmentation for Better Feasibility--Performance Trade-offs}
-\author{Draft Manuscript}
+\title{Rule-Guided Synthetic Data Augmentation\\{\large Research proposal (concept note)}}
+\author{}
 \date{\today}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We present a practical workflow for steering model behavior with lightweight structural rules while preserving predictive performance.
-The key idea is to iteratively generate synthetic training points and optimize them against a combined objective:
-hold-out task performance (root mean squared error for regression, accuracy for multi-class classification) and a feasibility score grounded in \emph{do}-interventions on the fitted model, not correlation with SHAP values alone.
-Unlike post-hoc explanation-only methods, our approach actively edits training data to align predicted interventional effects with user-specified directional rules.
-We provide an implementation based on LightGBM, Optuna (TPE), and TreeSHAP only for optional plots, and demonstrate the pipeline on two tabular datasets.
+We outline \textbf{iSHAP} (interventional SHAP), a data-centric proposal: iteratively synthesize training rows so a fitted predictor better matches lightweight \emph{structural} rules (e.g.\ monotonicity of an intervention on the outcome) while tracking ordinary hold-out task performance.
+Feasibility is scored from \emph{interventional} summaries of the model (\emph{do}-style sweeps on held-out covariate rows), not from post-hoc explanation plots alone.
+Optimization uses a scalar or Pareto-style trade-off between performance and feasibility; augmentation stops when the combined score no longer improves.
 \end{abstract}
 
-\section{Introduction}
-Many machine learning systems achieve strong predictive metrics but violate simple domain expectations.
-For example, in glucose forecasting one may expect that increased insulin should decrease future glucose, yet unconstrained models may learn unstable or non-monotone interventional curves.
-This creates a gap between pure predictive optimization and rule-consistent behavior.
+\section{Motivation}
+Predictive models often achieve strong metrics yet violate simple domain expectations (e.g.\ higher insulin should not predict higher future glucose under intervention; higher PM2.5 should not predict higher student grades).
+Post-hoc explanations do not fix the training distribution.
+iSHAP proposes to \emph{augment} training data with synthetic points chosen to improve both validation performance and interventional alignment with user-specified rules.
 
-We propose iSHAP, a method that uses structural rules and model-based \emph{do}-effects to guide synthetic augmentation.
-At each round, candidate synthetic points are optimized with respect to a combined objective balancing:
+\section{Methodology}
+The pipeline (Figure~\ref{fig:flow}) is a loop with one clear quality criterion: \emph{does adding this synthetic batch make the model both more accurate and more rule-consistent?}
+
 \begin{enumerate}
-    \item prediction quality on hold-out data (task-appropriate metric), and
-    \item rule feasibility from interventional summaries of the model response.
-\end{enumerate}
-If a candidate improves the combined objective, it is added to training data and the model is retrained.
-This creates a closed loop between model fit, interventional diagnostics, and data augmentation.
-
-\section{Method}
-\subsection{Problem Setup}
-Given training data $(X, y)$ and directed rules
-$\mathcal{R} = \{(u \rightarrow v, s)\}$ with desired qualitative sign $s \in \{-1, 0, +1\}$ (negative, none, positive),
-we train a predictive model and evaluate rule consistency under interventions implied by the model map.
-
-\paragraph{Rules to the target.}
-For a rule $(u \rightarrow y)$, fix a validation covariate matrix $X$ and sweep a grid $g$ over the observed range of feature $u$.
-Define the interventional prediction curve
-\[
-  \bar{f}(g) \;=\; \frac{1}{n}\sum_{i=1}^n f\big(X^{(i)}_{\neg u},\, u{=}g\big),
-\]
-where row $i$ is copied and only column $u$ is set to $g$.
-We summarize alignment with the desired monotone direction (higher $u$ should raise or lower $\bar{f}$ depending on $s$) using a monotone score derived from the consecutive differences of $\bar{f}(g)$ along the grid (full agreement with the desired direction yields the strongest feasibility contribution).
-A Pearson correlation between $g$ and $\bar{f}(g)$ is retained as a diagnostic correlate of global slope but feasibility optimization emphasizes monotone agreement with the rule sign.
-
-\paragraph{Rules between features.}
-For $(u \rightarrow v)$ with both $u,v$ among inputs, we use the partial correlation between $X_u$ and $X_v$ after linearly controlling for all other observed features---a compact backdoor-style adjustment when the full causal graph is unknown.
-
-Aggregating weighted deviations of each rule's summary from the ideal sign yields a feasibility score in $[0,1]$.
-
-\subsection{Optimization Objective}
-At each round, Optuna (TPE sampler) proposes synthetic points.
-Each trial is scored by a combined objective that rewards better hold-out performance and higher feasibility.
-The trade-off is controlled by \texttt{objective\_metric\_weight} in code:
-\begin{itemize}
-    \item \texttt{0.0}: prioritize hold-out performance only (regression: lower root mean squared error; classification: higher accuracy),
-    \item \texttt{1.0}: prioritize feasibility only,
-    \item intermediate values: linear trade-off in the implemented scalar.
-\end{itemize}
-
-\subsection{Round-Based Augmentation}
-The pipeline:
-\begin{enumerate}
-    \item Train baseline model on current augmented set.
-    \item Optimize a batch of synthetic points.
-    \item Evaluate combined score on fixed validation diagnostics.
-    \item Accept batch if combined score improves; otherwise stop.
+    \item \textbf{Specify rules.} The user writes a small set of directed expectations
+    $u \rightarrow v$ with a qualitative behavior (e.g.\ ``higher insulin $\Rightarrow$ lower future glucose'', monotone decrease).
+    No numerical effect sizes are required.
+    \item \textbf{Train a baseline.} Fit a predictive model (e.g.\ LightGBM) on the real training split.
+    Record hold-out performance with the task-appropriate metric (RMSE for regression, accuracy for classification).
+    \item \textbf{Score baseline feasibility.} For each rule $u\rightarrow v$, sweep $u$ over a grid on a fixed set of held-out covariate rows and compute the interventional mean
+    $\bar f(g) = \frac{1}{n}\sum_{i} f(X^{(i)}_{\neg u},\, u{=}g)$.
+    Compare $\bar f$ to the expected qualitative shape; aggregate per-rule alignments into a single feasibility score in $[0,1]$.
+    \item \textbf{Propose a synthetic batch.} Use a Bayesian optimizer (e.g.\ Optuna TPE) to sample a batch of candidate rows $(X_s, y_s)$ within feature bounds.
+    \item \textbf{Retrain and re-evaluate.} Fit a fresh model on real data plus the candidate batch; recompute validation loss and feasibility.
+    \item \textbf{Accept or stop.} Combine the two numbers via a weight $\lambda$ (or Pareto comparison): \\
+    $\text{score} = (1-\lambda)\,(1-\text{normalized loss}) + \lambda\,\text{feasibility}$. \\
+    Append the batch if the combined score strictly improves; otherwise stop.
+    \item \textbf{Finalize and audit.} Train a final model on real data plus all accepted synthetic rows.
+    Predict on test data, re-render the interventional curves, and store curves and JSON summaries for transparent inspection.
+    \item \textbf{Optional feedback.} Rules can be refined from new domain input or from a separate causal-discovery step, restarting the loop with updated expectations.
 \end{enumerate}
 
-\section{Experimental Setup}
-\subsection{Datasets}
-We currently evaluate:
+\section{Illustrative example: Ohio T1DM (patient 540)}
+Each figure plots the interventional mean prediction
+$\bar f(g) = \frac{1}{n}\sum_i f(X^{(i)}_{\neg u},\, u{=}g)$
+for insulin $\rightarrow$ future glucose change, comparing the baseline model (\emph{before}) to the model after latent-confounder imputation (\emph{after}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\linewidth]{images/ohio_t1dm/540/do_curve_before_after.png}
+    \caption{Ohio T1DM patient 540: interventional response for $\mathrm{do}(\text{insulin}{=}g)$. Before vs.\ after I-SHAP latent confounder.}
+    \label{fig:do_ohio}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\linewidth]{images/ohio_t1dm/540/preprocess_example_insulin_glucose.png}
+    \caption{Raw CGM, insulin, and carb events (example day) used to build impact-curve features.}
+    \label{fig:preprocess_ohio}
+\end{figure}
+
+\section{Key working points}
 \begin{itemize}
-    \item \textbf{d1namo}: glucose-related tabular \emph{regression}; hold-out metric is root mean squared prediction error (reported as \texttt{error} in outputs).
-    \item \textbf{cancer\_air\_pollution}: cancer risk \emph{classification} with ordinal labels mapped to classes; hold-out metric is classification \emph{accuracy}.
+    \item \textbf{SCM generation and rule definition} 
+    \item \textbf{Better combination of performance and feasibility} 
+    \item \textbf{More datasets} 
+    \item \textbf{More efficient feasibility scoring} 
+    \item \textbf{More efficient synthetic data generation} 
+    \item \textbf{Replacing optimization loop with mathematical calculations?} 
 \end{itemize}
-
-\subsection{Rules}
-For controlled sanity checks, we use one rule per dataset:
-\begin{itemize}
-    \item d1namo: \texttt{insulin} $\rightarrow$ \texttt{future glucose}, negative (higher insulin should correspond to lower predicted future glucose along the do-curve).
-    \item cancer\_air\_pollution: \texttt{Air Pollution} $\rightarrow$ \texttt{Level}, positive.
-\end{itemize}
-
-\section{Results}
-\subsection{Quantitative Summary}
-Table~\ref{tab:main_results} summarizes a recent pipeline run exported to \texttt{results/<dataset>/feasibility.json}.
-Performance and feasibility definitions differ by task as described above; the feasibility column aggregates interventional alignment for target rules (and partial correlations for feature-feature rules when present).
-
-\begin{table}[ht]
-    \centering
-    \caption{Before/after summary (representative run; re-run scripts to refresh numbers).}
-    \label{tab:main_results}
-    \begin{tabular}{llrrrr}
-        \toprule
-        Dataset & Hold-out metric & Before & After & $\Delta$ Feas. & Synth rows \\
-        \midrule
-        d1namo & RMSE (\texttt{error}) & 28.328 & 28.575 & +0.198 & 80 \\
-        cancer\_air\_pollution & Accuracy & 1.000 & 1.000 & +0.137 & 60 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-For d1namo, feasibility optimizes a \emph{monotonic signed} summary for target rules (\texttt{feasibility.json} \texttt{pearson\_r\_*} rows store that score; key name is historical). Pearson $\rho$ between grid and curve (\texttt{do\_effect\_corr\_*} in the feasibility blob; \texttt{before\_do\_corr} / \texttt{after\_do\_corr} in the do-curve file) may fall while feasibility still climbs. Archived JSON carries both \texttt{monotonic\_signed\_score}-style summaries and step-alignment fractions.
-For cancer\_air\_pollution, the rule summary moved from $0.720$ toward $0.993$ while hold-out accuracy remained at perfect accuracy on the evaluated split.
-
-\subsection{Visual Evidence: SHAP and interaction views}
-Figures~\ref{fig:d1_bee}--\ref{fig:cancer_net} show before/after SHAP beeswarm and correlation-based interaction networks for context.
-They are not the primary feasibility signal; the interventional curves below are.
-
-\begin{figure}[ht]
-    \centering
-    \IfFileExists{images/d1namo/shap_beeswarm_before_after_synthetic.png}
-    {\includegraphics[width=0.9\linewidth]{images/d1namo/shap_beeswarm_before_after_synthetic.png}}
-    {\includegraphics[width=0.9\linewidth]{images/d1namo/d1namo_shap_beeswarm_before_after_synthetic.png}}
-    \caption{d1namo SHAP beeswarm before and after augmentation.}
-    \label{fig:d1_bee}
-\end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \IfFileExists{images/d1namo/shap_interaction_network_before_after_synthetic.png}
-    {\includegraphics[width=0.9\linewidth]{images/d1namo/shap_interaction_network_before_after_synthetic.png}}
-    {\includegraphics[width=0.9\linewidth]{images/d1namo/d1namo_shap_interaction_network_before_after_synthetic.png}}
-    \caption{d1namo correlation-based interaction network before and after augmentation.}
-    \label{fig:d1_net}
-\end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \IfFileExists{images/cancer_air_pollution/shap_beeswarm_before_after_synthetic.png}
-    {\includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/shap_beeswarm_before_after_synthetic.png}}
-    {\includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/cancer_air_pollution_shap_beeswarm_before_after_synthetic.png}}
-    \caption{cancer\_air\_pollution SHAP beeswarm before and after augmentation.}
-    \label{fig:cancer_bee}
-\end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \IfFileExists{images/cancer_air_pollution/shap_interaction_network_before_after_synthetic.png}
-    {\includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/shap_interaction_network_before_after_synthetic.png}}
-    {\includegraphics[width=0.9\linewidth]{images/cancer_air_pollution/cancer_air_pollution_shap_interaction_network_before_after_synthetic.png}}
-    \caption{cancer\_air\_pollution correlation-based interaction network before and after augmentation.}
-    \label{fig:cancer_net}
-\end{figure}
-
-\subsection{Interventional (\emph{do}) curves}
-Figure~\ref{fig:do_d1namo} and Figure~\ref{fig:do_cancer} plot $\bar{f}(g)$ versus intervention level $g$ for each target-directed rule before and after augmentation.
-Numeric grids and predictions for the plotted curves live only under \texttt{results/<dataset>/} as \texttt{do\_curve\_before\_after.json} (long CSV alongside). Metrics there use the same intervention grid subsample as \texttt{compute\_feasibility} (avoid comparing a finer grid to coarse optimization summaries).
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.92\linewidth]{images/d1namo/do_curve_before_after.png}
-    \caption{d1namo: interventional mean prediction vs.\ fixed $u$ for the insulin rule (before vs.\ after augmentation).}
-    \label{fig:do_d1namo}
-\end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.92\linewidth]{images/cancer_air_pollution/do_curve_before_after.png}
-    \caption{cancer\_air\_pollution: same construction for Air Pollution $\rightarrow$ Level (classification model; $\bar{f}$ is mean predicted score / class logits aggregated as in the codebase).}
-    \label{fig:do_cancer}
-\end{figure}
-
-\section{Discussion}
-Interventional feasibility makes the notion of ``insulin lowers future glucose'' directly testable on the fitted predictor, independently of beeswarm correlations.
-Splitting hold-out metrics by task (RMSE vs.\ accuracy) avoids mis-stating performance on the cancer benchmark.
-The stored do-curve tables allow external reproduction and alternative plot styles without re-fitting.
-
-Current limitations include dependence on the choice of validation rows for the do-sweep, grid resolution, and the strength of partial-correlation surrogates for non-target rules when the true graph is unknown.
-
-\section{Limitations and Future Work}
-Future work should investigate richer SCM-based adjustment sets for feature--feature rules, adaptive grids, and joint multi-rule interventional constraints.
-
-\section{Conclusion}
-iSHAP couples data-centric synthetic search with interventional and partial-correlation feasibility so practitioners can trade predictive metrics against rule-shaped model behavior with auditable curves and saved numeric artifacts.
 
 \end{document}

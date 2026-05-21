@@ -1,101 +1,74 @@
 from __future__ import annotations
 
-import importlib
-import os
+import time
 import warnings
+from pathlib import Path
 
-from lib import iSHAP
-from visuals import (
-    centered_radial_positions,
-    save_do_curve_before_after_figure,
-    save_shap_beeswarm_before_after_figure,
-    save_shap_interaction_network_before_after_graph,
-    save_scm_graph_from_rules,
+import ohio_t1dm
+from head_to_head import (
+    HEAD_TO_HEAD_KEYS,
+    run_all_patients,
+    write_presentation_artifacts,
 )
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message="All-NaN slice encountered", category=RuntimeWarning)
 
-DATASETS: list[str] = ["d1namo"]
+ROOT = Path(__file__).resolve().parent.parent
+SEED = 42
+PATIENT_ID = "540"
 
-# Augmentation controls (forwarded to iSHAP.run_pipeline).
-RUN_PIPELINE_KWARGS: dict[str, float | int] = {
-    "random_state": 42,
-    "test_size": 0.25,
-    "synth_points_per_round": 20,
-    "n_trials": 1000,
-    "objective_metric_weight": 0.5,
-}
-MIN_ABS_PEARSON_FOR_INTERACTION_GRAPH = 0.4
+N_TRIALS = 5000
+SELECTION_RMSE_WEIGHT = 0.5  # 0= only feasibility, 1= only RMSE
+N_HIDDEN_CONFOUNDERS = 1
+FEASIBILITY_GRID_SIZE = 10
+DO_CURVE_MAX_SAMPLES = 100
+
+# Synthetic augmentation: SCM counterfactual rows per Optuna trial (single NSGA-II pass).
+N_SYNTH_ROWS_PER_ROUND = 100
+SHOW_PROGRESSBAR = False
+
+PRES_IMG_DIR = ROOT / "presentation" / "images"
 
 
-def project_root(relative_to_file: str) -> str:
-    return os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(relative_to_file)), ".."))
-
-
-def run_dataset(dm: object) -> None:
-    root = project_root(__file__)
-    img_dir = os.path.join(root, "manuscript", "images", str(dm.NAME))
-    results_dir = os.path.join(root, "results", str(dm.NAME))
-
-    X, y = dm.load(root)
-    result = iSHAP.run_pipeline(
-        X, y,
-        rules=list(dm.SCM_RULES),
-        target=str(dm.TARGET),
-        root=root,
-        name=str(dm.NAME),
-        task=str(getattr(dm, "TASK", "regression")),
-        **RUN_PIPELINE_KWARGS,
+def _run_kw() -> dict:
+    return dict(
+        root=ROOT,
+        seed=SEED,
+        n_trials=N_TRIALS,
+        selection_rmse_weight=SELECTION_RMSE_WEIGHT,
+        n_hidden_confounders=N_HIDDEN_CONFOUNDERS,
+        feasibility_grid_size=FEASIBILITY_GRID_SIZE,
+        do_curve_max_samples=DO_CURVE_MAX_SAMPLES,
+        n_synth_rows=N_SYNTH_ROWS_PER_ROUND,
+        show_progress_bar=SHOW_PROGRESSBAR,
     )
 
-    cols       = result["cols"]
-    target     = result["target"]
-    feat_order = tuple(getattr(dm, "FEATURE_COLUMNS", tuple(cols)))
-    pos        = centered_radial_positions(feat_order, target)
 
-    save_shap_interaction_network_before_after_graph(
-        cols=cols,
-        target_name=target,
-        X_df_before=result["X_eval_before"],
-        model_before=result["model_before"],
-        X_df_after=result["X_eval_after"],
-        model_after=result["model_after"],
-        out_path=os.path.join(img_dir, "shap_interaction_network_before_after_synthetic.png"),
-        seed=42,
-        pos=pos,
-        min_abs_pearson=MIN_ABS_PEARSON_FOR_INTERACTION_GRAPH,
+def run_head_to_head() -> None:
+    n = len(ohio_t1dm.patient_ids(str(ROOT)))
+    print(f"Head-to-head ({n} patients, n_trials={N_TRIALS}, NSGA-II w={SELECTION_RMSE_WEIGHT}) …", flush=True)
+    t0 = time.perf_counter()
+    rows, summary = run_all_patients(manuscript_patient=PATIENT_ID, **_run_kw())
+    wall_s = time.perf_counter() - t0
+    write_presentation_artifacts(
+        rows, summary, PRES_IMG_DIR,
+        n_trials=N_TRIALS, selection_rmse_weight=SELECTION_RMSE_WEIGHT,
     )
-    save_shap_beeswarm_before_after_figure(
-        model_before=result["model_before"],
-        model_after=result["model_after"],
-        X_val_df=result["X_val"],
-        out_path=os.path.join(img_dir, "shap_beeswarm_before_after_synthetic.png"),
-        random_state=42,
-        max_samples=200,
-        title_before="Before augmentation",
-        title_after="After augmentation",
-    )
-    save_scm_graph_from_rules(
-        rules=list(dm.SCM_RULES),
-        feature_cols=feat_order,
-        target_name=target,
-        out_path=os.path.join(img_dir, "scm_graph.png"),
-        pos=pos,
-    )
-    save_do_curve_before_after_figure(
-        cols=cols,
-        target_name=target,
-        rules=list(dm.SCM_RULES),
-        model_before=result["model_before"],
-        model_after=result["model_after"],
-        X_eval_df=result["X_val"],
-        out_path=os.path.join(img_dir, "do_curve_before_after.png"),
-        out_data_path=os.path.join(results_dir, "do_curve_before_after.json"),
-        grid_size=11,
-        max_samples=200,
-        random_state=42,
-    )
+    print("\nSummary (all patients):", flush=True)
+    for key in HEAD_TO_HEAD_KEYS:
+        s = summary.get(key, {})
+        if s:
+            print(
+                f"  {s['label']:22s}  insulin_feas {s['insulin_feas_mean']:.3f}±{s['insulin_feas_std']:.3f}  "
+                f"val_RMSE {s['val_rmse_mean']:.2f}  test_RMSE {s['test_rmse_mean']:.2f}  "
+                f"runtime {s['runtime_s_mean']:.1f}±{s['runtime_s_std']:.1f}s",
+                flush=True,
+            )
+    print(f"\nTotal wall time: {wall_s:.1f}s ({wall_s / 60:.1f} min)", flush=True)
+    print(f"\nPresentation → {PRES_IMG_DIR / 'head_to_head_insulin_ircs.png'}", flush=True)
 
-for name in DATASETS:
-    run_dataset(importlib.import_module(name))
+
+if __name__ == "__main__":
+    run_head_to_head()

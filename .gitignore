@@ -4,8 +4,22 @@ __pycache__/
 *.pyc
 .DS_Store
 
-# LaTeX compile artifacts (manuscript only)
+# Large data (rebuild locally: python scripts/ohio_t1dm.py)
+OhioT1DM/
+datasets/ohio_t1dm.csv
+
+# LaTeX compile artifacts
 manuscript/**/*.aux
+presentation/**/*.aux
+presentation/**/*.log
+presentation/**/*.nav
+presentation/**/*.snm
+presentation/**/*.out
+presentation/**/*.toc
+presentation/**/*.fls
+presentation/**/*.fdb_latexmk
+presentation/**/*.synctex.gz
+presentation/**/*.synctex(busy)
 manuscript/**/*.bbl
 manuscript/**/*.bcf
 manuscript/**/*.blg

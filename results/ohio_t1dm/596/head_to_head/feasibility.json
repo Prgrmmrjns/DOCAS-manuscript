@@ -1,0 +1,191 @@
+{
+  "feasibility": {
+    "before": 0.6815,
+    "after": 0.6815
+  },
+  "rmse": {
+    "val": {
+      "before": 19.7957,
+      "after": 19.5706
+    },
+    "test": {
+      "before": 18.9705,
+      "after": 18.8367
+    }
+  },
+  "optimizer": "nsga2_joint",
+  "n_hidden_confounders": 1,
+  "selection_rmse_weight": 0.5,
+  "active_latent_confounders": [
+    "confounder_1"
+  ],
+  "imputer_config": {
+    "use_intercept": false,
+    "use_shap_interactions": true
+  },
+  "search_objectives": {
+    "val_rmse": 19.5706,
+    "feasibility": 0.8222,
+    "trial": 224
+  },
+  "top_weights": {
+    "confounder_1": [
+      {
+        "feature": "SHAP carbs \u00d7 glucose roc 30m",
+        "weight": 2.4822782611770453
+      },
+      {
+        "feature": "SHAP carbs \u00d7 glucose accel",
+        "weight": 2.3549656178868297
+      },
+      {
+        "feature": "SHAP carbs \u00d7 glucose std 1h",
+        "weight": -2.2991029005828088
+      },
+      {
+        "feature": "SHAP glucose roc 30m",
+        "weight": 2.2938816939479683
+      },
+      {
+        "feature": "SHAP carbs \u00d7 pa accel",
+        "weight": 2.2644333804852943
+      },
+      {
+        "feature": "SHAP glucose accel",
+        "weight": 2.232698759778498
+      },
+      {
+        "feature": "SHAP carbs \u00d7 glucose context m30",
+        "weight": -2.0059729591414617
+      },
+      {
+        "feature": "SHAP insulin",
+        "weight": -1.9366294890949916
+      },
+      {
+        "feature": "SHAP pa accel \u00d7 glucose context m30",
+        "weight": -1.9322937085434693
+      },
+      {
+        "feature": "SHAP pa accel \u00d7 glucose roc 30m",
+        "weight": 1.899943913478412
+      },
+      {
+        "feature": "SHAP glucose roc 30m \u00d7 glucose accel",
+        "weight": 1.7420720626648711
+      },
+      {
+        "feature": "SHAP insulin \u00d7 glucose std 1h",
+        "weight": -1.7244017644898908
+      },
+      {
+        "feature": "SHAP insulin \u00d7 pa accel",
+        "weight": -1.689807952639808
+      },
+      {
+        "feature": "SHAP insulin \u00d7 glucose roc 30m",
+        "weight": 1.6709499051578236
+      },
+      {
+        "feature": "SHAP glucose roc 5m",
+        "weight": 1.6633758385757225
+      },
+      {
+        "feature": "SHAP glucose roc 30m \u00d7 glucose context m30",
+        "weight": -1.6211719856935114
+      },
+      {
+        "feature": "SHAP insulin \u00d7 carbs",
+        "weight": -1.5931022974522664
+      },
+      {
+        "feature": "SHAP glucose accel \u00d7 glucose std 1h",
+        "weight": 1.400278673067918
+      },
+      {
+        "feature": "SHAP insulin \u00d7 glucose context m30",
+        "weight": 1.35432252650867
+      },
+      {
+        "feature": "SHAP glucose roc 5m \u00d7 glucose roc 30m",
+        "weight": -1.3198743268511182
+      },
+      {
+        "feature": "SHAP carbs \u00d7 glucose roc 5m",
+        "weight": -1.315280847401742
+      },
+      {
+        "feature": "SHAP pa accel",
+        "weight": 1.278166813217696
+      },
+      {
+        "feature": "SHAP carbs",
+        "weight": 1.10783171914427
+      },
+      {
+        "feature": "SHAP insulin \u00d7 glucose roc 5m",
+        "weight": -1.0537044591849316
+      },
+      {
+        "feature": "SHAP glucose roc 30m \u00d7 glucose std 1h",
+        "weight": 0.9662879803706387
+      },
+      {
+        "feature": "predicted future glucose",
+        "weight": -0.8762576624188284
+      },
+      {
+        "feature": "SHAP glucose context m30 \u00d7 glucose std 1h",
+        "weight": 0.8675343684917408
+      },
+      {
+        "feature": "true future glucose",
+        "weight": 0.8583034736586742
+      },
+      {
+        "feature": "SHAP pa accel \u00d7 glucose std 1h",
+        "weight": 0.7251936011743076
+      },
+      {
+        "feature": "SHAP pa accel \u00d7 glucose roc 5m",
+        "weight": 0.6886338413472126
+      },
+      {
+        "feature": "SHAP insulin \u00d7 glucose accel",
+        "weight": 0.6158861594642939
+      },
+      {
+        "feature": "SHAP glucose roc 5m \u00d7 glucose accel",
+        "weight": -0.5443122917727677
+      },
+      {
+        "feature": "SHAP glucose std 1h",
+        "weight": -0.5412771073016753
+      },
+      {
+        "feature": "SHAP glucose roc 5m \u00d7 glucose context m30",
+        "weight": -0.534008317292104
+      },
+      {
+        "feature": "SHAP glucose context m30",
+        "weight": -0.5185112368151495
+      },
+      {
+        "feature": "future glucose \u00d7 prediction",
+        "weight": 0.42373497781254044
+      },
+      {
+        "feature": "SHAP glucose accel \u00d7 glucose context m30",
+        "weight": -0.4076318980617316
+      },
+      {
+        "feature": "SHAP pa accel \u00d7 glucose accel",
+        "weight": 0.3417307952317655
+      },
+      {
+        "feature": "SHAP glucose roc 5m \u00d7 glucose std 1h",
+        "weight": -0.23967722076196019
+      }
+    ]
+  }
+}
