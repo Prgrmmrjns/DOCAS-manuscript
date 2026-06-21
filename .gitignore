@@ -1,35 +1,38 @@
 .cursor
+.venv/
 __pycache__/
 **/__pycache__/
 *.pyc
 .DS_Store
+.env
 
-# Large data (rebuild locally: python scripts/ohio_t1dm.py)
+# Large data (rebuild: python scripts/ohio_t1dm.py)
 OhioT1DM/
 datasets/ohio_t1dm.csv
 
+# Reference clone (not part of this repo)
+interpretable-DL4BGP/
+
+# Regenerable outputs
+results/
+images/
+
+# Manuscript figures (committed)
+!manuscript/images/
+!manuscript/images/**
+
 # LaTeX compile artifacts
 manuscript/**/*.aux
-presentation/**/*.aux
-presentation/**/*.log
-presentation/**/*.nav
-presentation/**/*.snm
-presentation/**/*.out
-presentation/**/*.toc
-presentation/**/*.fls
-presentation/**/*.fdb_latexmk
-presentation/**/*.synctex.gz
-presentation/**/*.synctex(busy)
+manuscript/**/*.log
+manuscript/**/*.out
 manuscript/**/*.bbl
 manuscript/**/*.bcf
 manuscript/**/*.blg
 manuscript/**/*.fdb_latexmk
 manuscript/**/*.fls
 manuscript/**/*.lof
-manuscript/**/*.log
 manuscript/**/*.lot
 manuscript/**/*.nav
-manuscript/**/*.out
 manuscript/**/*.run.xml
 manuscript/**/*.snm
 manuscript/**/*.synctex.gz
