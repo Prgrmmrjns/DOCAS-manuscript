@@ -2,8 +2,11 @@
 
 Manuscript, OhioT1DM / ReplayBG experiments, and the DOCAS library used in the paper.
 
-**Public package:** [Prgrmmrjns/DOCAS](https://github.com/Prgrmmrjns/DOCAS)  
+Local clone: `~/Documents/DOCAS-manuscript`  
+**Public package:** [Prgrmmrjns/DOCAS](https://github.com/Prgrmmrjns/DOCAS) (`~/Documents/DOCAS`)  
 (`pip install` / examples live there; this repo vendors the same `src/docas` for the study.)
+
+> On macOS (case-insensitive disk), do **not** also use a folder named `docas` — it collides with `DOCAS`.
 
 ## Layout
 
