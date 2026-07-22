@@ -1,0 +1,38 @@
+# Virtual environment
+.venv/
+
+# Python bytecode
+__pycache__/
+*.py[codz]
+*.so
+
+# Numba cache
+**/__pycache__/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+
+# Docs build output
+site/
+docs/_build/
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checker caches
+.mypy_cache/
+.ruff_cache/
+
+# Example output (large binary data files)
+example/results/
+
+# Lock file (large, not useful for code understanding)
+uv.lock

@@ -1,0 +1,18 @@
+\begin{table}[!htbp]
+\caption{PH30 ablations on patient~588: alternative DOCAS targets.
+Align.\ (mg/dL RMSE to~$\tau$; full-range uses $f_0>70$~mg/dL,
+ others use hyperglycaemic contexts) and RMSE~$\Delta$ vs.\ baseline
+ (20.69~mg/dL).}
+\label{tab:ablation}
+\begin{tabular*}{\tblwidth}{@{\extracolsep{\fill}}lcc@{}}
+\toprule
+Ablation & Align. & RMSE $\Delta$ \\
+\midrule
+Hardcoded (hyper only) & 2.89 & +5.36 \\
+Independence & 1.49 & +0.95 \\
+CGM interaction & 0.01 & +2.04 \\
+CHO surface & 4.79 & +1.24 \\
+Full range ($f_0>70$) & 2.47 & +5.76 \\
+\bottomrule
+\end{tabular*}
+\end{table}

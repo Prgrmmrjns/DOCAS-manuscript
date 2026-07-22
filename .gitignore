@@ -1,39 +1,55 @@
 .cursor
 .venv/
+.venv_pkg/
+.venv_dl4bgp/
+.venv_lstm/
 __pycache__/
 **/__pycache__/
 *.pyc
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
 .DS_Store
 .env
 
-# Large data (rebuild: python scripts/ohio_t1dm.py)
+# Large data — download OhioT1DM XML to repo root
 OhioT1DM/
 datasets/ohio_t1dm.csv
 
-# Reference clone (not part of this repo)
+# Reference clones (not part of this repo)
 interpretable-DL4BGP/
+external/py_replay_bg/
+external/replaybg/
+tools/PaperBanana/
+tools/papervizagent/
+tools/paperbanana_out/
+tools/paperviz_out/
+tools/.venv/
+tools/PaperBanana/configs/model_config.yaml
+tools/papervizagent/configs/model_config.yaml
+
+# Local reference PDFs
+s41598-*.pdf
 
 # Regenerable outputs
 results/
+archive/
 images/
+experiments/out/
 
-# Manuscript figures (committed)
-!manuscript/images/
-!manuscript/images/**
+# LaTeX build artifacts
+manuscript/*.aux
+manuscript/*.log
+manuscript/*.out
+manuscript/*.fls
+manuscript/*.fdb_latexmk
+manuscript/*.blg
+manuscript/*.abs
+manuscript/*.synctex.gz
 
-# LaTeX compile artifacts
-manuscript/**/*.aux
-manuscript/**/*.log
-manuscript/**/*.out
-manuscript/**/*.bbl
-manuscript/**/*.bcf
-manuscript/**/*.blg
-manuscript/**/*.fdb_latexmk
-manuscript/**/*.fls
-manuscript/**/*.lof
-manuscript/**/*.lot
-manuscript/**/*.nav
-manuscript/**/*.run.xml
-manuscript/**/*.snm
-manuscript/**/*.synctex.gz
-manuscript/**/*.toc
+# Vendored ReplayBG clone artifacts
+replaybg/.venv/
+replaybg/**/*.egg-info/
+replaybg/.pytest_cache/

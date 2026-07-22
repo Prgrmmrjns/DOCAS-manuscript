@@ -1,0 +1,91 @@
+\begin{table}[!htbp]
+\caption{Strategies for aligning models to the physiologically expected insulin
+response (glucose should fall, monotonically, as corrective insulin increases),
+including general attribution- and intervention-based baselines.
+\emph{Aligns curve}: targets the full
+interventional audit curve $u\mapsto\hat g(x,u)$ rather than a scalar feature
+attribution. \emph{Repairs model}: changes training or architecture rather than
+only measuring, verifying, or generating data. \emph{Model-agnostic}:
+applicable without a task-specific network redesign. \emph{T1D validation}:
+evaluated on glucose forecasting or insulin decision support with a concrete
+audit-curve or attribution check.}
+\label{tab:alignment-strategies}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular*}{\tblwidth}{@{\extracolsep{\fill}}p{2.3cm}p{1.6cm}p{3.35cm}p{0.75cm}p{0.75cm}p{0.9cm}p{0.95cm}@{}}
+\toprule
+Strategy & Representative studies & What is aligned & Aligns curve & Repairs model & Model-agnostic & T1D validation \\
+\midrule
+Attribution alignment / diagnosis &
+\citep{prendin2023,zhu2023xai,ross2017,rieger2020,erion2021} &
+Feature attributions (SHAP sign, gradients) matched to expert priors; scalar per prediction &
+$\times$ &
+Partial &
+Partial &
+Partial \\
+Causal / do-operator attributions (do-SHAP) &
+\citep{janzing2020causal,jung2022doshapley,heskes2020causalshap} &
+Per-feature causal contribution $\mathbb{E}[Y\mid do(x_S)]$; measures a fitted model, needs a causal graph &
+$\times$ &
+$\times$ &
+\checkmark &
+$\times$ \\
+Interventional dose--response estimation &
+\citep{schwab2020drnet,scholkopf2021} &
+Estimates $\mathbb{E}[Y\mid do(t)]$ from data via balanced representations / dose heads under ignorability &
+\checkmark &
+\checkmark &
+$\times$ &
+$\times$ \\
+Physiological preprocessing / architecture &
+\citep{prendin2023,zecchin2012,mirshekarian2017,pavan2020} &
+Input filters (IOB/COB) or a p-LSTM layer so SHAP attributions match insulin/CHO PK &
+$\times$ &
+\checkmark &
+$\times$ &
+\checkmark \\
+Conformance verification + penalty training &
+\citep{kushner2020,kushner2020dt} &
+Range-propagation checks and training penalties for insulin monotonicity in NN glucose predictors &
+Partial &
+\checkmark &
+Partial &
+\checkmark \\
+Hard monotonic architecture &
+\citep{you2019,runje2023} &
+Architecturally monotone input--output maps (lattice networks, constrained-activation MLPs) &
+Partial &
+\checkmark &
+Partial &
+$\times$ \\
+Hard monotonic constraint, gradient-boosted trees (this paper, Table~\ref{tab:ohio}) &
+\citep{ke2017} &
+LightGBM monotone constraints on the insulin split direction &
+Partial &
+\checkmark &
+\checkmark &
+\checkmark \\
+Mechanistic feature engineering, LightGBM &
+\citep{wolber2025multimodal} &
+Optimized B\'ezier macronutrient dynamics (optionally from meal images via mLLM) as LightGBM inputs &
+$\times$ &
+\checkmark &
+\checkmark &
+\checkmark \\
+Monotonicity-constrained synthetic-data generator &
+\citep{prendin2025mongan} &
+GAN generator constrained so BG decreases with insulin, increases with CHO &
+Partial &
+$\times$ &
+$\times$ &
+\checkmark (sim.) \\
+Synthetic dose--response supervision (\textbf{DOCAS, ours}) &
+--- &
+User-defined target function $\tau$ on anchors selected by a context rule; imposed on the interventional audit curve, no identifiability assumed &
+\checkmark &
+\checkmark &
+\checkmark &
+\checkmark \\
+\bottomrule
+\end{tabular*}
+\end{table}

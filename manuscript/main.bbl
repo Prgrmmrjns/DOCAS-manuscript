@@ -1,0 +1,263 @@
+\begin{thebibliography}{50}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\href}[2]{#2}
+\providecommand{\path}[1]{#1}
+\providecommand{\DOIprefix}{doi:}
+\providecommand{\ArXivprefix}{arXiv:}
+\providecommand{\URLprefix}{URL: }
+\providecommand{\Pubmedprefix}{pmid:}
+\providecommand{\doi}[1]{\href{http://dx.doi.org/#1}{\path{#1}}}
+\providecommand{\Pubmed}[1]{\href{pmid:#1}{\path{#1}}}
+\providecommand{\bibinfo}[2]{#2}
+\ifx\xfnm\relax \def\xfnm[#1]{\unskip,\space#1}\fi
+%Type = Article
+\bibitem[{Oviedo et~al.(2017)Oviedo, Veh{\'i}, Calm, and Armengol}]{oviedo2017}
+\bibinfo{author}{S.~Oviedo}, \bibinfo{author}{J.~Veh{\'i}}, \bibinfo{author}{R.~Calm}, \bibinfo{author}{J.~Armengol},
+\newblock \bibinfo{title}{A review of personalized blood glucose prediction strategies for {T1DM} patients},
+\newblock \bibinfo{journal}{International Journal for Numerical Methods in Biomedical Engineering} \bibinfo{volume}{33} (\bibinfo{year}{2017}) \bibinfo{pages}{e2833}.
+%Type = Article
+\bibitem[{Zhu et~al.(2021)Zhu, Li, Herrero, and Georgiou}]{zhu2021}
+\bibinfo{author}{T.~Zhu}, \bibinfo{author}{K.~Li}, \bibinfo{author}{P.~Herrero}, \bibinfo{author}{P.~Georgiou},
+\newblock \bibinfo{title}{Deep learning for diabetes: a systematic review},
+\newblock \bibinfo{journal}{IEEE Journal of Biomedical and Health Informatics} \bibinfo{volume}{25} (\bibinfo{year}{2021}) \bibinfo{pages}{2744--2757}.
+%Type = Inproceedings
+\bibitem[{Marling and Bunescu(2020)}]{marling2020}
+\bibinfo{author}{C.~Marling}, \bibinfo{author}{R.~Bunescu},
+\newblock \bibinfo{title}{The {OhioT1DM} dataset for blood glucose level prediction: update 2020},
+\newblock in: \bibinfo{booktitle}{The 5th International Workshop on Knowledge Discovery in Healthcare Data}, volume \bibinfo{volume}{2675} of \textit{\bibinfo{series}{CEUR Workshop Proceedings}}, \bibinfo{year}{2020}, pp. \bibinfo{pages}{71--74}.
+%Type = Article
+\bibitem[{Beauchamp et~al.(2021)Beauchamp, Bunescu, Marling, Li, and Liu}]{beauchamp2021}
+\bibinfo{author}{J.~Beauchamp}, \bibinfo{author}{R.~Bunescu}, \bibinfo{author}{C.~Marling}, \bibinfo{author}{Z.~Li}, \bibinfo{author}{C.~Liu},
+\newblock \bibinfo{title}{{LSTMs} and deep residual networks for carbohydrate and bolus recommendations in type 1 diabetes management},
+\newblock \bibinfo{journal}{Sensors} \bibinfo{volume}{21} (\bibinfo{year}{2021}) \bibinfo{pages}{3303}.
+%Type = Article
+\bibitem[{Katsarou et~al.(2017)Katsarou, Gudbj{\"o}rnsdottir, Rawshani, Dabelea, Bonifacio, Anderson, Dahlquist, S{\"a}tterstr{\"o}m, Shaw, and Tuomilehto}]{katsarou2017}
+\bibinfo{author}{A.~Katsarou}, \bibinfo{author}{S.~Gudbj{\"o}rnsdottir}, \bibinfo{author}{A.~Rawshani}, \bibinfo{author}{D.~Dabelea}, \bibinfo{author}{E.~Bonifacio}, \bibinfo{author}{B.~J. Anderson}, \bibinfo{author}{G.~Dahlquist}, \bibinfo{author}{J.~S{\"a}tterstr{\"o}m}, \bibinfo{author}{J.~Shaw}, \bibinfo{author}{J.~Tuomilehto},
+\newblock \bibinfo{title}{Type 1 diabetes mellitus},
+\newblock \bibinfo{journal}{Nature Reviews Disease Primers} \bibinfo{volume}{3} (\bibinfo{year}{2017}) \bibinfo{pages}{17016}.
+%Type = Article
+\bibitem[{Rodbard(2016)}]{rodbard2016}
+\bibinfo{author}{D.~Rodbard},
+\newblock \bibinfo{title}{Continuous glucose monitoring: a review of successes, challenges, and opportunities},
+\newblock \bibinfo{journal}{Diabetes Technology \& Therapeutics} \bibinfo{volume}{18} (\bibinfo{year}{2016}) \bibinfo{pages}{S2--3--S2--13}.
+%Type = Article
+\bibitem[{Prendin et~al.(2023)Prendin, Pavan, Cappon, Del~Favero, Sparacino, and Facchinetti}]{prendin2023}
+\bibinfo{author}{F.~Prendin}, \bibinfo{author}{J.~Pavan}, \bibinfo{author}{G.~Cappon}, \bibinfo{author}{S.~Del~Favero}, \bibinfo{author}{G.~Sparacino}, \bibinfo{author}{A.~Facchinetti},
+\newblock \bibinfo{title}{The importance of interpreting machine learning models for blood glucose prediction in diabetes: an analysis using {SHAP}},
+\newblock \bibinfo{journal}{Scientific Reports} \bibinfo{volume}{13} (\bibinfo{year}{2023}) \bibinfo{pages}{16865}.
+%Type = Article
+\bibitem[{Miller(2019)}]{miller2019}
+\bibinfo{author}{T.~Miller},
+\newblock \bibinfo{title}{Explanation in artificial intelligence: insights from the social sciences},
+\newblock \bibinfo{journal}{Artificial Intelligence} \bibinfo{volume}{267} (\bibinfo{year}{2019}) \bibinfo{pages}{1--38}.
+%Type = Article
+\bibitem[{Yu et~al.(2018)Yu, Beam, and Kohane}]{yu2018}
+\bibinfo{author}{K.-H. Yu}, \bibinfo{author}{A.~L. Beam}, \bibinfo{author}{I.~S. Kohane},
+\newblock \bibinfo{title}{Artificial intelligence in healthcare},
+\newblock \bibinfo{journal}{Nature Biomedical Engineering} \bibinfo{volume}{2} (\bibinfo{year}{2018}) \bibinfo{pages}{719--731}.
+%Type = Article
+\bibitem[{Hagras(2018)}]{hagras2018}
+\bibinfo{author}{H.~Hagras},
+\newblock \bibinfo{title}{Toward human-understandable, explainable {AI}},
+\newblock \bibinfo{journal}{Computer} \bibinfo{volume}{51} (\bibinfo{year}{2018}) \bibinfo{pages}{28--36}.
+%Type = Article
+\bibitem[{Sch{\"o}lkopf et~al.(2021)Sch{\"o}lkopf, Locatello, Bauer, Ke, Kalchbrenner, Gretton, and K{\"u}gelgen}]{scholkopf2021}
+\bibinfo{author}{B.~Sch{\"o}lkopf}, \bibinfo{author}{F.~Locatello}, \bibinfo{author}{S.~Bauer}, \bibinfo{author}{N.~R. Ke}, \bibinfo{author}{N.~Kalchbrenner}, \bibinfo{author}{A.~Gretton}, \bibinfo{author}{J.~v. K{\"u}gelgen},
+\newblock \bibinfo{title}{Toward causal representation learning},
+\newblock \bibinfo{journal}{Proceedings of the IEEE} \bibinfo{volume}{109} (\bibinfo{year}{2021}) \bibinfo{pages}{612--634}.
+%Type = Article
+\bibitem[{Cappon et~al.(2023)Cappon, Vettoretti, Sparacino, Del~Favero, and Facchinetti}]{cappon2023}
+\bibinfo{author}{G.~Cappon}, \bibinfo{author}{M.~Vettoretti}, \bibinfo{author}{G.~Sparacino}, \bibinfo{author}{S.~Del~Favero}, \bibinfo{author}{A.~Facchinetti},
+\newblock \bibinfo{title}{{ReplayBG}: a digital twin-based methodology to identify a personalized model from type 1 diabetes data and simulate glucose concentrations to assess alternative therapies},
+\newblock \bibinfo{journal}{IEEE Transactions on Biomedical Engineering} \bibinfo{volume}{70} (\bibinfo{year}{2023}) \bibinfo{pages}{3205--3216}.
+%Type = Inproceedings
+\bibitem[{Kushner et~al.(2020)Kushner, Sankaranarayanan, and Breton}]{kushner2020}
+\bibinfo{author}{T.~Kushner}, \bibinfo{author}{S.~Sankaranarayanan}, \bibinfo{author}{M.~D. Breton},
+\newblock \bibinfo{title}{Conformance verification for neural network models of glucose-insulin dynamics},
+\newblock in: \bibinfo{booktitle}{Proceedings of the 23rd ACM International Conference on Hybrid Systems: Computation and Control}, \bibinfo{year}{2020}, pp. \bibinfo{pages}{1--12}. \DOIprefix\doi{10.1145/3365365.3382210}.
+%Type = Article
+\bibitem[{Geirhos et~al.(2020)Geirhos, Jacobsen, Michaelis, Zemel, Brendel, Bethge, and Wichmann}]{geirhos2020}
+\bibinfo{author}{R.~Geirhos}, \bibinfo{author}{J.-H. Jacobsen}, \bibinfo{author}{C.~Michaelis}, \bibinfo{author}{R.~Zemel}, \bibinfo{author}{W.~Brendel}, \bibinfo{author}{M.~Bethge}, \bibinfo{author}{F.~A. Wichmann},
+\newblock \bibinfo{title}{Shortcut learning in deep neural networks},
+\newblock \bibinfo{journal}{Nature Machine Intelligence} \bibinfo{volume}{2} (\bibinfo{year}{2020}) \bibinfo{pages}{665--673}.
+%Type = Inproceedings
+\bibitem[{Lundberg and Lee(2017)}]{lundberg2017}
+\bibinfo{author}{S.~M. Lundberg}, \bibinfo{author}{S.-I. Lee},
+\newblock \bibinfo{title}{A unified approach to interpreting model predictions},
+\newblock in: \bibinfo{booktitle}{Advances in Neural Information Processing Systems}, volume~\bibinfo{volume}{30}, \bibinfo{year}{2017}.
+%Type = Inproceedings
+\bibitem[{Ribeiro et~al.(2016)Ribeiro, Singh, and Guestrin}]{ribeiro2016}
+\bibinfo{author}{M.~T. Ribeiro}, \bibinfo{author}{S.~Singh}, \bibinfo{author}{C.~Guestrin},
+\newblock \bibinfo{title}{"{W}hy should {I} trust you?": Explaining the predictions of any classifier},
+\newblock in: \bibinfo{booktitle}{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, \bibinfo{year}{2016}, pp. \bibinfo{pages}{1135--1144}. \DOIprefix\doi{10.1145/2939672.2939778}.
+%Type = Article
+\bibitem[{Zhu et~al.(2023)Zhu, Li, Herrero, and Georgiou}]{zhu2023xai}
+\bibinfo{author}{T.~Zhu}, \bibinfo{author}{K.~Li}, \bibinfo{author}{P.~Herrero}, \bibinfo{author}{P.~Georgiou},
+\newblock \bibinfo{title}{Exploring nutritional influence on blood glucose forecasting for type 1 diabetes using explainable {AI}},
+\newblock \bibinfo{journal}{IEEE Journal of Biomedical and Health Informatics} \bibinfo{volume}{27} (\bibinfo{year}{2023}) \bibinfo{pages}{2876--2887}.
+%Type = Article
+\bibitem[{Zecchin et~al.(2012)Zecchin, Facchinetti, Sparacino, De~Nicolao, and Cobelli}]{zecchin2012}
+\bibinfo{author}{C.~Zecchin}, \bibinfo{author}{A.~Facchinetti}, \bibinfo{author}{G.~Sparacino}, \bibinfo{author}{G.~De~Nicolao}, \bibinfo{author}{C.~Cobelli},
+\newblock \bibinfo{title}{Neural network incorporating meal information improves accuracy of short-time prediction of glucose concentration},
+\newblock \bibinfo{journal}{IEEE Transactions on Biomedical Engineering} \bibinfo{volume}{59} (\bibinfo{year}{2012}) \bibinfo{pages}{1550--1560}.
+%Type = Inproceedings
+\bibitem[{Mirshekarian et~al.(2017)Mirshekarian, Bunescu, Marling, and Schwartz}]{mirshekarian2017}
+\bibinfo{author}{S.~Mirshekarian}, \bibinfo{author}{R.~Bunescu}, \bibinfo{author}{C.~Marling}, \bibinfo{author}{F.~Schwartz},
+\newblock \bibinfo{title}{Using {LSTMs} to learn physiological models of blood glucose behavior},
+\newblock in: \bibinfo{booktitle}{2017 39th Annual International Conference of the IEEE Engineering in Medicine and Biology Society}, \bibinfo{year}{2017}, pp. \bibinfo{pages}{2887--2891}. \DOIprefix\doi{10.1109/EMBC.2017.8037370}.
+%Type = Article
+\bibitem[{Pavan et~al.(2020)Pavan, Sparacino, and Facchinetti}]{pavan2020}
+\bibinfo{author}{J.~Pavan}, \bibinfo{author}{G.~Sparacino}, \bibinfo{author}{A.~Facchinetti},
+\newblock \bibinfo{title}{Personalized machine learning algorithm based on shallow network and error imputation module for an improved blood glucose prediction},
+\newblock \bibinfo{journal}{CEUR Workshop Proceedings} \bibinfo{volume}{2675} (\bibinfo{year}{2020}) \bibinfo{pages}{95--99}.
+%Type = Article
+\bibitem[{Kushner et~al.(2020)Kushner, Breton, and Sankaranarayanan}]{kushner2020dt}
+\bibinfo{author}{T.~Kushner}, \bibinfo{author}{M.~D. Breton}, \bibinfo{author}{S.~Sankaranarayanan},
+\newblock \bibinfo{title}{Multi-hour blood glucose prediction in type 1 diabetes: a patient-specific approach using shallow neural network models},
+\newblock \bibinfo{journal}{Diabetes Technology \& Therapeutics} \bibinfo{volume}{22} (\bibinfo{year}{2020}) \bibinfo{pages}{883--891}.
+%Type = Book
+\bibitem[{Pearl(2009)}]{pearl2009causality}
+\bibinfo{author}{J.~Pearl}, \bibinfo{title}{Causality: Models, Reasoning, and Inference}, \bibinfo{edition}{2} ed., \bibinfo{publisher}{Cambridge University Press}, \bibinfo{year}{2009}. \DOIprefix\doi{10.1017/CBO9780511803161}.
+%Type = Inproceedings
+\bibitem[{Ke et~al.(2017)Ke, Meng, Finley, Wang, Chen, Ma, Ye, and Liu}]{ke2017}
+\bibinfo{author}{G.~Ke}, \bibinfo{author}{Q.~Meng}, \bibinfo{author}{T.~Finley}, \bibinfo{author}{T.~Wang}, \bibinfo{author}{W.~Chen}, \bibinfo{author}{W.~Ma}, \bibinfo{author}{Q.~Ye}, \bibinfo{author}{T.-Y. Liu},
+\newblock \bibinfo{title}{{LightGBM}: a highly efficient gradient boosting decision tree},
+\newblock in: \bibinfo{booktitle}{Advances in Neural Information Processing Systems}, volume~\bibinfo{volume}{30}, \bibinfo{year}{2017}.
+%Type = Inproceedings
+\bibitem[{Cappon et~al.(2020)Cappon, Vettoretti, Sparacino, Del~Favero, and Facchinetti}]{cappon2020kdh}
+\bibinfo{author}{G.~Cappon}, \bibinfo{author}{M.~Vettoretti}, \bibinfo{author}{G.~Sparacino}, \bibinfo{author}{S.~Del~Favero}, \bibinfo{author}{A.~Facchinetti},
+\newblock \bibinfo{title}{A personalized and interpretable deep learning based approach to predict blood glucose concentration in type 1 diabetes},
+\newblock in: \bibinfo{booktitle}{Knowledge Discovery in Healthcare Data Workshop at ECAI}, \bibinfo{year}{2020}, pp. \bibinfo{pages}{75--79}.
+%Type = Article
+\bibitem[{Pearl(2019)}]{pearl2019tools}
+\bibinfo{author}{J.~Pearl},
+\newblock \bibinfo{title}{The seven tools of causal inference, with reflections on machine learning},
+\newblock \bibinfo{journal}{Communications of the ACM} \bibinfo{volume}{62} (\bibinfo{year}{2019}) \bibinfo{pages}{54--60}.
+%Type = Inproceedings
+\bibitem[{Ross et~al.(2017)Ross, Hughes, and Doshi-Velez}]{ross2017}
+\bibinfo{author}{A.~S. Ross}, \bibinfo{author}{M.~C. Hughes}, \bibinfo{author}{F.~Doshi-Velez},
+\newblock \bibinfo{title}{Right for the right reasons: Training differentiable models by constraining their explanations},
+\newblock in: \bibinfo{booktitle}{Proceedings of the Twenty-Sixth International Joint Conference on Artificial Intelligence}, \bibinfo{year}{2017}, pp. \bibinfo{pages}{2662--2670}. \DOIprefix\doi{10.24963/ijcai.2017/371}.
+%Type = Inproceedings
+\bibitem[{Selvaraju et~al.(2019)Selvaraju, Lee, Shen, Jin, Ghosh, Heck, Batra, and Parikh}]{selvaraju2019}
+\bibinfo{author}{R.~R. Selvaraju}, \bibinfo{author}{S.~Lee}, \bibinfo{author}{Y.~Shen}, \bibinfo{author}{H.~Jin}, \bibinfo{author}{S.~Ghosh}, \bibinfo{author}{L.~Heck}, \bibinfo{author}{D.~Batra}, \bibinfo{author}{D.~Parikh},
+\newblock \bibinfo{title}{Taking a {HINT}: Leveraging explanations to make vision and language models more grounded},
+\newblock in: \bibinfo{booktitle}{Proceedings of the IEEE/CVF International Conference on Computer Vision}, \bibinfo{year}{2019}, pp. \bibinfo{pages}{2591--2600}. \DOIprefix\doi{10.1109/ICCV.2019.00268}.
+%Type = Inproceedings
+\bibitem[{Rieger et~al.(2020)Rieger, Singh, Murdoch, and Yu}]{rieger2020}
+\bibinfo{author}{L.~Rieger}, \bibinfo{author}{C.~Singh}, \bibinfo{author}{W.~J. Murdoch}, \bibinfo{author}{B.~Yu},
+\newblock \bibinfo{title}{Interpretations are useful: Penalizing explanations to align neural networks with prior knowledge},
+\newblock in: \bibinfo{booktitle}{Proceedings of the 37th International Conference on Machine Learning}, volume \bibinfo{volume}{119} of \textit{\bibinfo{series}{Proceedings of Machine Learning Research}}, \bibinfo{year}{2020}, pp. \bibinfo{pages}{8116--8126}. \URLprefix \url{https://proceedings.mlr.press/v119/rieger20a.html}.
+%Type = Article
+\bibitem[{Erion et~al.(2021)Erion, Janizek, Sturmfels, Lundberg, and Lee}]{erion2021}
+\bibinfo{author}{G.~Erion}, \bibinfo{author}{J.~D. Janizek}, \bibinfo{author}{P.~Sturmfels}, \bibinfo{author}{S.~M. Lundberg}, \bibinfo{author}{S.-I. Lee},
+\newblock \bibinfo{title}{Improving performance of deep learning models with axiomatic attribution priors and expected gradients},
+\newblock \bibinfo{journal}{Nature Machine Intelligence} \bibinfo{volume}{3} (\bibinfo{year}{2021}) \bibinfo{pages}{620--631}.
+%Type = Inproceedings
+\bibitem[{Janzing et~al.(2020)Janzing, Minorics, and Bl{\"o}baum}]{janzing2020causal}
+\bibinfo{author}{D.~Janzing}, \bibinfo{author}{L.~Minorics}, \bibinfo{author}{P.~Bl{\"o}baum},
+\newblock \bibinfo{title}{Feature relevance quantification in explainable {AI}: A causal problem},
+\newblock in: \bibinfo{booktitle}{Proceedings of the 23rd International Conference on Artificial Intelligence and Statistics}, volume \bibinfo{volume}{108} of \textit{\bibinfo{series}{Proceedings of Machine Learning Research}}, \bibinfo{year}{2020}, pp. \bibinfo{pages}{2907--2916}. \URLprefix \url{https://proceedings.mlr.press/v108/janzing20a.html}.
+%Type = Inproceedings
+\bibitem[{Jung et~al.(2022)Jung, Kasiviswanathan, Tian, Janzing, Bl{\"o}baum, and Bareinboim}]{jung2022doshapley}
+\bibinfo{author}{Y.~Jung}, \bibinfo{author}{S.~Kasiviswanathan}, \bibinfo{author}{J.~Tian}, \bibinfo{author}{D.~Janzing}, \bibinfo{author}{P.~Bl{\"o}baum}, \bibinfo{author}{E.~Bareinboim},
+\newblock \bibinfo{title}{On measuring causal contributions via do-interventions},
+\newblock in: \bibinfo{booktitle}{Proceedings of the 39th International Conference on Machine Learning}, volume \bibinfo{volume}{162} of \textit{\bibinfo{series}{Proceedings of Machine Learning Research}}, \bibinfo{year}{2022}, pp. \bibinfo{pages}{10476--10501}. \URLprefix \url{https://proceedings.mlr.press/v162/jung22a.html}.
+%Type = Inproceedings
+\bibitem[{Heskes et~al.(2020)Heskes, Sijben, Bucur, and Claassen}]{heskes2020causalshap}
+\bibinfo{author}{T.~Heskes}, \bibinfo{author}{E.~Sijben}, \bibinfo{author}{I.~G. Bucur}, \bibinfo{author}{T.~Claassen},
+\newblock \bibinfo{title}{Causal {S}hapley values: Exploiting causal knowledge to explain individual predictions of complex models},
+\newblock in: \bibinfo{booktitle}{Advances in Neural Information Processing Systems}, volume~\bibinfo{volume}{33}, \bibinfo{year}{2020}, pp. \bibinfo{pages}{4778--4789}.
+%Type = Inproceedings
+\bibitem[{Liu et~al.(2021)Liu, Khandagale, White, and Neiswanger}]{liu2021xaibench}
+\bibinfo{author}{Y.~Liu}, \bibinfo{author}{S.~Khandagale}, \bibinfo{author}{C.~White}, \bibinfo{author}{W.~Neiswanger},
+\newblock \bibinfo{title}{Synthetic benchmarks for scientific research in explainable machine learning},
+\newblock in: \bibinfo{booktitle}{Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks}, volume~\bibinfo{volume}{1}, \bibinfo{year}{2021}. \URLprefix \url{https://openreview.net/forum?id=R7vr14ffhF9}.
+%Type = Inproceedings
+\bibitem[{Agarwal et~al.(2022)Agarwal, Krishna, Saxena, Pawelczyk, Johnson, Puri, Zitnik, and Lakkaraju}]{agarwal2022openxai}
+\bibinfo{author}{C.~Agarwal}, \bibinfo{author}{S.~Krishna}, \bibinfo{author}{E.~Saxena}, \bibinfo{author}{M.~Pawelczyk}, \bibinfo{author}{N.~Johnson}, \bibinfo{author}{I.~Puri}, \bibinfo{author}{M.~Zitnik}, \bibinfo{author}{H.~Lakkaraju},
+\newblock \bibinfo{title}{{OpenXAI}: Towards a transparent evaluation of model explanations},
+\newblock in: \bibinfo{booktitle}{Thirty-Sixth Conference on Neural Information Processing Systems Datasets and Benchmarks Track}, \bibinfo{year}{2022}. \URLprefix \url{https://openreview.net/forum?id=MU2495w47rz}.
+%Type = Inproceedings
+\bibitem[{Schwab et~al.(2020)Schwab, Linhardt, Bauer, Buhmann, and Karlen}]{schwab2020drnet}
+\bibinfo{author}{P.~Schwab}, \bibinfo{author}{L.~Linhardt}, \bibinfo{author}{S.~Bauer}, \bibinfo{author}{J.~M. Buhmann}, \bibinfo{author}{W.~Karlen},
+\newblock \bibinfo{title}{Learning counterfactual representations for estimating individual dose-response curves},
+\newblock in: \bibinfo{booktitle}{Proceedings of the AAAI Conference on Artificial Intelligence}, volume~\bibinfo{volume}{34}, \bibinfo{year}{2020}, pp. \bibinfo{pages}{5612--5619}. \DOIprefix\doi{10.1609/aaai.v34i04.6014}.
+%Type = Inproceedings
+\bibitem[{You et~al.(2019)You, Gurumurthy, Robson, and Du}]{you2019}
+\bibinfo{author}{J.~You}, \bibinfo{author}{S.~Gurumurthy}, \bibinfo{author}{M.~Robson}, \bibinfo{author}{L.~Du},
+\newblock \bibinfo{title}{Deep lattice networks and partial monotonic functions},
+\newblock in: \bibinfo{booktitle}{Advances in Neural Information Processing Systems}, volume~\bibinfo{volume}{32}, \bibinfo{year}{2019}.
+%Type = Inproceedings
+\bibitem[{Runje and Shankaranarayana(2023)}]{runje2023}
+\bibinfo{author}{D.~Runje}, \bibinfo{author}{S.~M. Shankaranarayana},
+\newblock \bibinfo{title}{Constrained monotonic neural networks},
+\newblock in: \bibinfo{booktitle}{Proceedings of the 40th International Conference on Machine Learning}, volume \bibinfo{volume}{202} of \textit{\bibinfo{series}{Proceedings of Machine Learning Research}}, \bibinfo{year}{2023}, pp. \bibinfo{pages}{29338--29353}. \URLprefix \url{https://proceedings.mlr.press/v202/runje23a.html}.
+%Type = Article
+\bibitem[{Wolber et~al.(2025)Wolber, {E. Samadi}, Sellin, and Schuppert}]{wolber2025multimodal}
+\bibinfo{author}{J.-L.~F. Wolber}, \bibinfo{author}{M.~{E. Samadi}}, \bibinfo{author}{J.~Sellin}, \bibinfo{author}{A.~Schuppert},
+\newblock \bibinfo{title}{Multimodal large language models and mechanistic modeling for glucose forecasting in type 1 diabetes patients},
+\newblock \bibinfo{journal}{Journal of Biomedical Informatics} \bibinfo{volume}{172} (\bibinfo{year}{2025}) \bibinfo{pages}{104945}.
+%Type = Inproceedings
+\bibitem[{Esponera and Cin{\`a}(2025)}]{esponera2025}
+\bibinfo{author}{A.~Esponera}, \bibinfo{author}{G.~Cin{\`a}},
+\newblock \bibinfo{title}{Inducing causal structure applied to glucose prediction for {T1DM} patients},
+\newblock in: \bibinfo{booktitle}{Proceedings of the Fourth Conference on Causal Learning and Reasoning}, volume \bibinfo{volume}{275} of \textit{\bibinfo{series}{Proceedings of Machine Learning Research}}, \bibinfo{year}{2025}, pp. \bibinfo{pages}{920--946}. \URLprefix \url{https://proceedings.mlr.press/v275/esponera25a.html}.
+%Type = Inproceedings
+\bibitem[{Prendin et~al.(2025)Prendin, Pavan, Cappon, Del~Favero, Sparacino, and Facchinetti}]{prendin2025mongan}
+\bibinfo{author}{F.~Prendin}, \bibinfo{author}{J.~Pavan}, \bibinfo{author}{G.~Cappon}, \bibinfo{author}{S.~Del~Favero}, \bibinfo{author}{G.~Sparacino}, \bibinfo{author}{A.~Facchinetti},
+\newblock \bibinfo{title}{Enhancing the physiological plausibility of {GAN}-generated blood glucose in type 1 diabetes with monotonicity constraints},
+\newblock in: \bibinfo{booktitle}{2025 IEEE International Conference on Metrology for eXtended Reality, Artificial Intelligence and Neural Engineering (MetroXRAINE)}, \bibinfo{year}{2025}. \DOIprefix\doi{10.1109/MetroXRAINE66377.2025.11340120}.
+%Type = Article
+\bibitem[{Verma et~al.(2025)Verma, Wiberg, Zhu, and Tayur}]{verma2025genex}
+\bibinfo{author}{H.~S. Verma}, \bibinfo{author}{H.~Wiberg}, \bibinfo{author}{S.~Zhu}, \bibinfo{author}{S.~R. Tayur},
+\newblock \bibinfo{title}{Data to dose: Efficient synthetic data generation with expert guidance for personalized dosing},
+\newblock \bibinfo{journal}{NeurIPS 2025 Workshop on Mathematical Foundations and Operational Integration of Machine Learning for Uncertainty-Aware Decision-Making}  (\bibinfo{year}{2025}).
+%Type = Article
+\bibitem[{Friedman(2001)}]{friedman2001}
+\bibinfo{author}{J.~H. Friedman},
+\newblock \bibinfo{title}{Greedy function approximation: a gradient boosting machine},
+\newblock \bibinfo{journal}{The Annals of Statistics} \bibinfo{volume}{29} (\bibinfo{year}{2001}) \bibinfo{pages}{1189--1232}.
+%Type = Article
+\bibitem[{Bergman et~al.(1979)Bergman, Ider, Bowden, and Cobelli}]{bergman1979}
+\bibinfo{author}{R.~N. Bergman}, \bibinfo{author}{Y.~Z. Ider}, \bibinfo{author}{C.~R. Bowden}, \bibinfo{author}{C.~Cobelli},
+\newblock \bibinfo{title}{Quantitative estimation of insulin sensitivity},
+\newblock \bibinfo{journal}{American Journal of Physiology-Endocrinology and Metabolism} \bibinfo{volume}{236} (\bibinfo{year}{1979}) \bibinfo{pages}{E667--E677}.
+%Type = Article
+\bibitem[{Cobelli et~al.(2009)Cobelli, Renard, and Kovatchev}]{cobelli2009}
+\bibinfo{author}{C.~Cobelli}, \bibinfo{author}{E.~Renard}, \bibinfo{author}{B.~Kovatchev},
+\newblock \bibinfo{title}{Diabetes: models, signals, and control},
+\newblock \bibinfo{journal}{IEEE Reviews in Biomedical Engineering} \bibinfo{volume}{2} (\bibinfo{year}{2009}) \bibinfo{pages}{54--96}.
+%Type = Article
+\bibitem[{Battelino et~al.(2019)Battelino, Danne, Bergenstal, Amiel, Beck, Biester, Bosi, Buckingham, Cefalu, Close et~al.}]{battelino2019}
+\bibinfo{author}{T.~Battelino}, \bibinfo{author}{T.~Danne}, \bibinfo{author}{R.~M. Bergenstal}, \bibinfo{author}{S.~A. Amiel}, \bibinfo{author}{R.~Beck}, \bibinfo{author}{T.~Biester}, \bibinfo{author}{E.~Bosi}, \bibinfo{author}{B.~A. Buckingham}, \bibinfo{author}{W.~T. Cefalu}, \bibinfo{author}{K.~L. Close}, et~al.,
+\newblock \bibinfo{title}{Clinical targets for continuous glucose monitoring data interpretation: recommendations from the international consensus on time in range},
+\newblock \bibinfo{journal}{Diabetes Care} \bibinfo{volume}{42} (\bibinfo{year}{2019}) \bibinfo{pages}{1593--1603}.
+%Type = Article
+\bibitem[{Dalla~Man et~al.(2007)Dalla~Man, Rizza, and Cobelli}]{dallaman2007}
+\bibinfo{author}{C.~Dalla~Man}, \bibinfo{author}{R.~A. Rizza}, \bibinfo{author}{C.~Cobelli},
+\newblock \bibinfo{title}{Meal simulation model of the glucose-insulin system},
+\newblock \bibinfo{journal}{IEEE Transactions on Biomedical Engineering} \bibinfo{volume}{54} (\bibinfo{year}{2007}) \bibinfo{pages}{1740--1749}.
+%Type = Article
+\bibitem[{Zech et~al.(2018)Zech, Badgeley, Liu, Costa, Titano, and Oermann}]{zech2018}
+\bibinfo{author}{J.~R. Zech}, \bibinfo{author}{M.~A. Badgeley}, \bibinfo{author}{M.~Liu}, \bibinfo{author}{A.~B. Costa}, \bibinfo{author}{J.~J. Titano}, \bibinfo{author}{E.~K. Oermann},
+\newblock \bibinfo{title}{Variable generalization performance of a deep learning model to detect pneumonia in chest radiographs: a cross-sectional study},
+\newblock \bibinfo{journal}{PLOS Medicine} \bibinfo{volume}{15} (\bibinfo{year}{2018}) \bibinfo{pages}{e1002683}.
+%Type = Article
+\bibitem[{DeGris et~al.(2024)DeGris, Glocker, Cardoso, Ourselin, and Rieke}]{degris2024}
+\bibinfo{author}{M.~DeGris}, \bibinfo{author}{B.~Glocker}, \bibinfo{author}{M.~J. Cardoso}, \bibinfo{author}{S.~Ourselin}, \bibinfo{author}{N.~Rieke},
+\newblock \bibinfo{title}{Shortcut learning in medical {AI} hinders generalization: method for estimating {AI} model generalization without external data},
+\newblock \bibinfo{journal}{npj Digital Medicine} \bibinfo{volume}{7} (\bibinfo{year}{2024}) \bibinfo{pages}{105}.
+%Type = Article
+\bibitem[{Nimri et~al.(2020)Nimri, Weintrob, Benzaquen, Ofan, Furman-Haran, Miller, Phillip, Atlas, Mullen, Neufeld et~al.}]{nimri2020}
+\bibinfo{author}{R.~Nimri}, \bibinfo{author}{N.~Weintrob}, \bibinfo{author}{H.~Benzaquen}, \bibinfo{author}{R.~Ofan}, \bibinfo{author}{E.~Furman-Haran}, \bibinfo{author}{S.~Miller}, \bibinfo{author}{M.~Phillip}, \bibinfo{author}{E.~Atlas}, \bibinfo{author}{Y.~Mullen}, \bibinfo{author}{N.~Neufeld}, et~al.,
+\newblock \bibinfo{title}{Insulin dose optimization using an automated artificial intelligence-based decision support system in youths with type 1 diabetes},
+\newblock \bibinfo{journal}{Nature Medicine} \bibinfo{volume}{26} (\bibinfo{year}{2020}) \bibinfo{pages}{1380--1384}.
+%Type = Article
+\bibitem[{Schiavon et~al.(2018)Schiavon, Dalla~Man, and Cobelli}]{schiavon2018}
+\bibinfo{author}{M.~Schiavon}, \bibinfo{author}{C.~Dalla~Man}, \bibinfo{author}{C.~Cobelli},
+\newblock \bibinfo{title}{Modeling subcutaneous absorption of fast-acting insulin in type 1 diabetes},
+\newblock \bibinfo{journal}{IEEE Transactions on Biomedical Engineering} \bibinfo{volume}{65} (\bibinfo{year}{2018}) \bibinfo{pages}{2079--2087}.
+
+\end{thebibliography}

@@ -1,62 +1,34 @@
-# iSHAP
+# DOCAS-manuscript (private)
 
-Interventional audits and causal fixes for tabular models (Ohio T1DM case study).
+Manuscript, OhioT1DM / ReplayBG experiments, and the DOCAS library used in the paper.
 
-Two main approaches:
+**Public package:** [Prgrmmrjns/DOCAS](https://github.com/Prgrmmrjns/DOCAS)  
+(`pip install` / examples live there; this repo vendors the same `src/docas` for the study.)
 
-- **Latent confounder imputation** — impute hidden columns from SHAP interactions (NSGA-II over imputer weights).
-- **Synthetic augmentation** — add SCM-guided counterfactual training rows (NSGA-II).
+## Layout
 
-Head-to-head compares baseline, monotonic LightGBM, preprocessing, feature engineering, synthetic augmentation, and latent confounders across all Ohio patients.
-
-## Setup
-
-```bash
-pip install -r requirements.txt
+```text
+src/docas/       # library (synced with public DOCAS)
+examples/        # package demos
+scripts/         # Ohio eval, ReplayBG, ablation, manuscript assets
+manuscript/      # LaTeX paper
+replaybg/        # vendored ReplayBG dependency
+results/         # local caches (gitignored)
 ```
 
-## Data
-
-- `datasets/ohio_t1dm.csv` — built automatically from `OhioT1DM/**/*.xml` when missing.
-- Raw XML lives under `OhioT1DM/` (2018 and 2020 cohorts).
-
-## Run
-
-Full head-to-head (all patients, writes presentation table/figures):
+## Research setup
 
 ```bash
-python scripts/main.py
+pip install -e ".[research]"
+# place OhioT1DM XML at OhioT1DM/
+python scripts/main.py           # uncomment steps in main()
+python scripts/manuscript.py     # tables + figures
+./manuscript/build.sh            # PDF
 ```
 
-Static slides only (IRC/SHAP/preprocess figures, no Optuna):
+## Package-only install
 
 ```bash
-python scripts/presentation_build.py
+pip install -e ".[examples]"
+python examples/01_quickstart.py
 ```
-
-Rebuild Ohio CSV from XML:
-
-```bash
-python scripts/ohio_t1dm.py
-```
-
-## Outputs
-
-- `results/ohio_t1dm/<patient_id>/` — feasibility, latent imputer params, head-to-head metrics.
-- `presentation/images/` — figures for `presentation/causalml_project_presentation.tex`.
-- `manuscript/images/ohio_t1dm/<patient_id>/` — manuscript figures for the reference patient (540).
-
-## Main files
-
-| File | Role |
-|------|------|
-| `scripts/main.py` | Head-to-head entry point |
-| `scripts/head_to_head.py` | Per-patient approach comparison |
-| `scripts/lib.py` | Latent imputer, feasibility, pipeline |
-| `scripts/synthetic_augment_experiment.py` | Synthetic augmentation |
-| `scripts/ohio_t1dm.py` | Data build/load, SCM rules |
-| `scripts/model.py` | LightGBM wrapper |
-| `scripts/visuals.py` | Plots |
-| `scripts/presentation_build.py` | Static presentation figures |
-| `manuscript/main.tex` | Paper draft |
-| `presentation/causalml_project_presentation.tex` | Beamer deck |

@@ -1,9 +1,3 @@
-numpy
-pandas
-polars
-scikit-learn
-lightgbm
-optuna
-shap
-matplotlib
-networkx
+# Prefer:  pip install -e ".[research]"
+# Kept for convenience when not using pyproject extras.
+-e .[research]

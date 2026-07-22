@@ -1,202 +1,859 @@
-\documentclass[11pt]{article}
-\usepackage[margin=1in]{geometry}
-\usepackage{graphicx}
-\usepackage{float}
-\usepackage{amsmath}
-\usepackage{booktabs}
-\usepackage{natbib}
-\usepackage{hyperref}
+\documentclass[a4paper,fleqn]{cas-sc}
 
-\title{iSHAP: Aligning Tabular Predictors with Domain Partial Dependence\\via Sequential Synthetic Augmentation}
-\author{}
-\date{}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{xurl}
+\usepackage{microtype}
+\usepackage{siunitx}
+\usepackage{placeins}
 
 \begin{document}
-\maketitle
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{0.9}
+\def\textpagefraction{0.05}
+
+\shorttitle{Dose-response alignment for T1D forecasting}
+\shortauthors{Anonymous Author(s)}
+
+\title[mode=title]{Dose-Response Curve Alignment via Synthetic Data for\\
+Physiologically Conformant Glucose Forecasting in Type~1 Diabetes}
+
+\author[1]{Anonymous Author}[role=Researcher]
+\cormark[1]
+\ead{corresponding.author@example.com}
+\credit{Conceptualization, Methodology, Software, Validation, Formal analysis,
+Writing -- original draft, Writing -- review and editing}
+
+\affiliation[1]{organization={Anonymous Institution},
+                addressline={Address withheld for peer review},
+                city={City},
+                country={Country}}
+\cortext[1]{Corresponding author. Author information is anonymized for peer review.}
 
 \begin{abstract}
-Machine-learning models for biomedical decision support can achieve strong predictive accuracy while violating elementary physiological expectations.
-In type~1 diabetes, a glucose forecaster may associate higher active insulin with \emph{higher} future glucose---a pattern that is clinically implausible yet difficult to detect from hold-out error alone.
-We present \textbf{iSHAP} (interpretability-guided SHAP), a model-agnostic procedure that aligns a fitted predictor with a user-specified \emph{insulin marginal partial dependence}.
-The user prescribes a decreasing sigmoid anchored at zero insulin effect; iSHAP audits the model at ten evenly spaced insulin levels, adds synthetic training rows with delta labels that nudge each node toward the target, and retrains left-to-right until the marginal matches while validation RMSE stays within a tight tolerance.
-We evaluate the approach on the OhioT1DM cohort for thirty-minute-ahead glucose change prediction using current CGM, active insulin on board, and ongoing carbohydrate absorption.
-Across twelve patients, iSHAP reduces insulin marginal error $\varepsilon_{\mathrm{I}}$ from a cohort mean of $27.6$ to $0.2$~mg/dL while mean test RMSE changes by only $+0.2$~mg/dL.
-In a retrospective decision-support replay with ReplayBG \citep{prendin2023shap,cappon2023replaybg}, restoring a glucose-lowering insulin attribution enables model-attributed corrective boluses where the baseline cannot act.
+Machine-learning glucose models are increasingly embedded in type~1
+diabetes (T1D) decision support and closed-loop systems, yet prediction
+accuracy alone does not guarantee safe therapeutic use. Observational CGM data
+induce strong \emph{covariate bias}: boluses are administered when glucose is
+already elevated and are collinear with prandial carbohydrate intake, so the
+observational joint distribution conflates the glucose-lowering effect of
+insulin with the hyperglycaemic contexts that trigger dosing. Empirical risk
+minimization on such data can achieve low error by fitting associative
+patterns---future glucose remains high \emph{because} insulin coincides with
+high CGM and meals---rather than encoding how glucose would change under
+counterfactual bolus perturbations. Diagnosing this with feature attributions
+reveals the symptom---e.g., positive SHAP contributions for insulin---but does
+not repair the underlying interventional behaviour. We introduce \emph{DOCAS}
+(dose--response curve alignment via synthetic augmentation), a lightweight,
+model-agnostic post-training procedure that does \emph{not} align feature
+attributions. Instead, it aligns the model's \emph{interventional audit
+curve}---the response traced by sweeping bolus insulin under a $do(\cdot)$-style
+query with context held fixed---to a user-specified \emph{target function}
+$\tau$ on hyperglycaemic contexts. DOCAS augments observational data with
+synthetic samples labeled by $\tau$ where an intervention is meaningful. In
+this study $\tau$ is derived by replaying the insulin pharmacokinetic and
+glucose--insulin equations of ReplayBG; the same mechanism accepts arbitrary target functions and
+surfaces. On held-out OhioT1DM data from all 12 participants, DOCAS sharply
+reduces alignment error relative to a strong LightGBM baseline, a hard
+monotone-constrained LightGBM comparator, and a Prendin-style LSTM family
+(np-LSTM, p-LSTM), while essentially preserving held-out RMSE. In ReplayBG
+digital-twin simulation of corrective-bolus decision support on patient
+588---the case study of Prendin et al.---DOCAS LightGBM increases
+time-in-range at both horizons and reduces the PH30 hypoglycaemia induced by a
+misaligned baseline controller. An ablation study shows the augmentation loop
+generalizes to flat, interaction, full-range, and two-dimensional targets.
+DOCAS is an open-source Python package in which practitioners supply their
+model, intervention feature, context rule, and target function---a more
+flexible repair strategy than architecture-specific or monotonicity-only
+alternatives.
 \end{abstract}
 
-\section{Introduction}
+\begin{highlights}
+\item DOCAS aligns a model's interventional audit curve---not its feature attributions---to a ReplayBG-derived insulin target via synthetic augmentation.
+\item Observational CGM data confound insulin with hyperglycaemia, corrupting counterfactual dose--response behavior.
+\item OhioT1DM (12 participants): DOCAS beats baseline, monotone LightGBM, and Prendin np-/p-LSTM on audit-curve alignment with negligible RMSE cost.
+\item Open-source Python package: user-defined target function, context rule, and model.
+\item ReplayBG on patient 588: DOCAS improves time-in-range and reduces misaligned-baseline hypoglycaemia.
+\item Ablation study shows the augmentation mechanism generalizes to flat, interaction, multi-feature, and full-range targets.
+\end{highlights}
 
-Continuous glucose monitoring (CGM) and insulin pumps have made type~1 diabetes (T1D) one of the most data-rich chronic conditions \citep{marling2020ohiot1dm,battelino2019tir}.
-Predictive models trained on these streams are increasingly embedded in decision-support systems (DSS) that recommend corrective insulin boluses when hyperglycemia is anticipated \citep{facchinetti2019dss,prendin2023shap}.
-Such models are almost always selected on forecast accuracy alone---root mean squared error (RMSE) or mean absolute error.
-Yet accuracy and physiology can diverge: two models with indistinguishable hold-out error may imply \emph{opposite} therapeutic actions when their learned input sensitivities disagree with how the body works \citep{prendin2023shap,nemat2024bgpred}.
+\begin{keywords}
+type 1 diabetes \sep glucose prediction \sep synthetic data \sep
+dose-response alignment \sep explainable AI \sep decision support \sep
+covariate bias \sep treatment confounding \sep open-source software \sep digital twin
+\end{keywords}
 
-The insulin channel is the canonical example.
-A glucose predictor at time $t$ consumes the current CGM reading $G_t$, an estimate of active insulin $I_t$, and a measure of ongoing carbohydrate absorption $C_t$, and forecasts the glucose change $\Delta G_{t+\mathrm{PH}}$ over a horizon $\mathrm{PH}$ \citep{nemat2024bgpred,prendin2023shap}.
-Physiology dictates that, holding other inputs fixed, more active insulin should not \emph{raise} future glucose, since insulin promotes peripheral glucose uptake \citep{dallaman2007meal}.
-In observational T1D data, however, prandial boluses are dosed in proportion to meal size, so insulin and carbohydrate intake are strongly correlated, and black-box learners readily absorb the combined meal--bolus signal into the wrong feature \citep{prendin2023shap,beven2023foundational}.
-Standard attribution tools such as SHAP \citep{lundberg2017unified,lundberg2020local} can expose this pathology \emph{post hoc}, but they diagnose rather than repair it \citep{rudin2019stop}.
+\maketitle
+\clearpage
 
-\citet{prendin2023shap} made the clinical stakes concrete with two long short-term memory (LSTM) networks trained on the same OhioT1DM subject: a non-physiological model (np-LSTM) and a model with absorption-kernel preprocessing (p-LSTM) \citep{dallaman2007meal}.
-The two architectures achieved nearly identical RMSE, but only p-LSTM attributed glucose-lowering effects to insulin.
-When both models were coupled to the same corrective-insulin-bolus (CIB) algorithm and replayed with ReplayBG \citep{cappon2023replaybg}, only the physiologically aligned predictor produced useful corrective doses \citep{battelino2019tir}.
+\section{Introduction}\label{sec:introduction}
 
-This motivates a complementary question: \emph{given} a black-box model that already fits the data well, can we repair its insulin marginal \emph{without} redesigning the learner \citep{koh2020concept}?
-We answer affirmatively with \textbf{iSHAP}, a model-agnostic alignment loop.
-The user specifies a target decreasing insulin sigmoid; iSHAP audits ten evenly spaced insulin nodes, augments training data with insulin-conditioned synthetic rows, and retrains until the marginal matches.
-Our OhioT1DM study instantiates the pipeline with gradient-boosted trees \citep{ke2017lightgbm}; the same audit statistic applies to any model that supports batched prediction under feature sweeps.
+Machine-learning glucose models are increasingly used in type~1 diabetes
+(T1D) decision support and public prediction
+benchmarks~\citep{oviedo2017,zhu2021,marling2020,beauchamp2021,katsarou2017,rodbard2016}.
+Model selection nevertheless remains dominated by held-out prediction error
+(RMSE, MAE), even though two models with indistinguishable accuracy can
+encode radically different---and clinically incompatible---input--output
+relationships~\citep{prendin2023,miller2019,yu2018,hagras2018}. In
+observational CGM data, insulin dosing is strongly correlated with concurrent
+or antecedent hyperglycaemia and meal intake---a form of \emph{treatment
+confounding} familiar from causal
+inference~\citep{scholkopf2021}. Doses are delivered in response to glycaemic
+state, not assigned experimentally. Under such \emph{covariate bias}, empirical
+risk minimization learns associative patterns that predict well on held-out
+rows yet fail under interventional use, when a decision support system (DSS)
+sweeps candidate bolus doses holding other inputs
+fixed~\citep{prendin2023,cappon2023,kushner2020,geirhos2020}. Prendin et al.\
+showed that an LSTM with accuracy comparable to a physiologically
+preprocessed counterpart assigned \emph{positive} SHAP contributions to
+insulin and forecasted glucose \emph{rising} after bolus administration; only
+the correctly attributed model improved glycaemic outcomes in corrective-bolus
+DSS~\citep{prendin2023,lundberg2017,ribeiro2016,zhu2023xai}. The model can
+therefore appear competent on observational metrics while encoding the wrong
+interventional dose--response map.
 
-Our contributions are threefold.
-First, we formalize a ten-node insulin marginal partial dependence as the audit statistic for physiological feasibility in glucose forecasting \citep{friedman2001greedy,lundberg2020local}.
-Second, we describe a sequential left-to-right augmentation loop with delta-labelled synthetic rows that preserves validation RMSE.
-Third, we report cohort-wide OhioT1DM results and connect alignment to a ReplayBG decision-support replay in the spirit of \citet{prendin2023shap}.
+Architectural priors---meal and insulin absorption filters before recurrent
+layers~\citep{prendin2023,zecchin2012,mirshekarian2017,pavan2020}---can
+partially decouple confounded inputs, but require task-specific design and do
+not guarantee correct audit-curve shape on hyperglycaemic contexts.
+Kushner et al.\ showed that neural predictors trained for accuracy alone
+routinely violate monotonicity constraints and proposed conformance
+verification to detect such failures~\citep{kushner2020,kushner2020dt}.
 
-\section{Methods}
+We address this gap with \emph{DOCAS} (dose--response curve alignment via
+synthetic augmentation), an open-source Python package for observational models
+whose interventional behaviour must match domain priors. DOCAS aligns the
+model's \emph{interventional audit curve}---the trajectory $u\mapsto\hat g(x,u)$
+obtained by sweeping the intervened feature under a $do(\cdot)$-style query with
+context~$x$ held fixed---to a user-specified \emph{target function}
+$\tau(x,a)$, not to a \emph{feature attribution} (a scalar such as a SHAP
+value for one prediction). The audit curve is exactly the counterfactual a
+bolus-sizing DSS reads off when choosing a dose~\citep{pearl2009causality,prendin2023,cappon2023};
+$\tau$ is the domain prior for how the forecast \emph{should} change under
+that probe. When we write \emph{dose--response curve} without a qualifier, we
+mean this generic dose-to-outcome relation and then specify \emph{audit} (model)
+or \emph{target} (prior). Rather than modifying model architecture or applying
+post-hoc explanation alone, DOCAS \emph{trains} a user-chosen model on
+observational rows plus synthetic counterfactuals so that the audit curve
+matches $\tau$: the practitioner specifies (i)~which feature is intervened,
+(ii)~a context predicate that selects anchor states, and (iii)~$\tau$ at each
+anchor and dose level. In T1D we instantiate $\tau$ with a ReplayBG-derived
+correction-bolus response on hyperglycaemic anchors
+(Section~\ref{subsec:target}), but the same
+loop accepts other curves, surfaces, or null constraints
+(Section~\ref{subsec:ablation}). The procedure is model-agnostic---here
+demonstrated with LightGBM and LSTM~\citep{ke2017}.
 
-\subsection{iSHAP}
+Although validated on T1D, DOCAS addresses a general failure mode whenever
+treatment variables are confounded with outcome
+severity~\citep{scholkopf2021,geirhos2020}. Because target shape, context
+selection, and model family are all user-defined, the method is more flexible
+than architectural preprocessors, hard monotonicity constraints, or
+simulator-coupled training objectives that lock alignment to one network or
+one causal graph. Section~\ref{sec:results} evaluates the T1D default on
+(i)~cohort-wide OhioT1DM forecasting with dose--response alignment metrics,
+(ii)~ReplayBG in-silico replay on patient~588, and (iii)~an ablation study
+(Section~\ref{subsec:ablation}) that stress-tests alternate targets. The
+open-source package exposes the same interface for other domains
+(Section~\ref{subsec:software}). Section~\ref{sec:related} contrasts DOCAS with
+attribution-based alignment (including causal, do-operator attributions) and
+with interventional dose--response estimation
+(Table~\ref{tab:alignment-strategies}).
+Section~\ref{sec:discussion} discusses implications for explainable AI and
+transfer beyond glucose forecasting.
 
-We start with a standard regression model trained on observational data.
-In our T1D study this is a LightGBM model \citep{ke2017lightgbm} that predicts thirty-minute glucose change from current CGM, active insulin on board (combining recent boluses and basal contribution), and ongoing carbohydrate absorption on the OhioT1DM train/test splits \citep{marling2020ohiot1dm}.
-Features are min--max normalized to $[0,1]$.
+\section{Related Work}\label{sec:related}
 
-\paragraph{Target insulin marginal.}
-The user specifies a decreasing sigmoid marginal $\tau(i)$ anchored at the baseline prediction when insulin is zero:
+Prendin et al.\ expose the central failure mode: two LSTM glucose models
+with similar RMSE produce opposite corrective-bolus decisions because the
+standard model assigns positive SHAP contributions to insulin, whereas a
+physiologically structured p-LSTM recovers the expected insulin-lowering and
+carbohydrate-raising signs~\citep{prendin2023,lundberg2017}. Related glucose-XAI
+studies use attributions diagnostically~\citep{zhu2023xai,cappon2020kdh}. These
+works align, or check, a \emph{feature attribution}---a scalar per-feature
+importance summarising one prediction. DOCAS instead aligns the model's
+\emph{interventional audit curve}, the full trajectory
+$u\mapsto\hat g(x,u)$ obtained by intervening on the bolus feature while holding
+the hyperglycaemic context fixed. An attribution can carry the correct insulin
+sign yet still hide a curve that is flat, non-monotone, or wrongly shaped over
+the dose grid a DSS actually sweeps; the audit curve makes that shape the
+object of alignment. Moreover, SHAP under dependent features is not a causal
+effect, so a correct sign is neither necessary nor sufficient for a correct
+counterfactual response; physiological knowledge or interventions are still
+needed to define the desired curve~\citep{prendin2023,pearl2019tools,geirhos2020,kushner2020}.
+
+The closest general literature is \emph{explanation-guided learning}, which
+feeds feature attributions back into optimization. Right for the Right Reasons
+penalizes input gradients on features experts mark as irrelevant
+\citep{ross2017}; HINT uses a ranking loss to match gradient-based importance to
+human attention~\citep{selvaraju2019}; and CDEP directly penalizes contextual
+decomposition attributions that conflict with prior knowledge
+\citep{rieger2020}. Erion et al.\ generalize this idea with Expected Gradients
+and attribution priors over properties such as sparsity, smoothness, and
+biological structure~\citep{erion2021}. These studies establish that
+attributions can be differentiable training signals, but they mostly align
+feature masks, rankings, or global priors in neural classifiers; they do not
+specify a numeric treatment dose--response curve or demonstrate T1D decision
+support.
+
+A distinct line of work makes attributions themselves causal by evaluating
+them under Pearl's $do$-operator rather than observational
+conditioning~\citep{pearl2009causality}. Janzing et al.\ argue that dropping a
+feature in a Shapley computation should mean intervening on it,
+$\mathbb{E}[Y\mid do(X_S=x_S)]$, not conditioning on
+it~\citep{janzing2020causal}; do-Shapley and causal Shapley values build on
+this to attribute a model's output to interventions on individual
+features~\citep{jung2022doshapley,heskes2020causalshap}. This ``do-SHAP''
+family shares our premise---that observational attributions conflate
+association with intervention---but differs from DOCAS in three ways. First,
+its output is still an \emph{attribution}: a scalar causal contribution per
+feature for one prediction, not the full response curve $u\mapsto\hat g(x,u)$ a
+DSS sweeps. Second, it is a read-out that \emph{measures} an already-trained
+model rather than a training procedure that \emph{repairs} it. Third, it needs
+a specified causal graph or SCM and identifiability of the interventional
+estimand from data. DOCAS requires neither a causal graph nor identifiability:
+because the insulin dose--response effect is not identified from observational
+T1D data, we do not estimate $\mathbb{E}[Y\mid do(u)]$ but instead \emph{impose}
+a physiological target on the audit curve and fit the model to it. In short, do-SHAP audits an
+interventional attribution; DOCAS aligns the interventional curve.
+
+A parallel literature evaluates attributions against known references.
+XAI-BENCH uses synthetic data to compute ground-truth Shapley values
+\citep{liu2021xaibench}, while OpenXAI scores feature, sign, and rank agreement
+with ground-truth explanations alongside faithfulness and stability
+\citep{agarwal2022openxai}. This motivates explicit alignment scores, but the
+reference differs from ours: those benchmarks test whether an explainer
+recovers a known model or data-generating function, whereas DOCAS scores a
+model's audit curve against a stated target function~$\tau$.
+Because counterfactual responses are not identified from observational T1D data
+alone, $\tau$ is a domain prior rather than observed ground truth.
+
+A further body of work aligns models to interventions by \emph{estimating} a
+dose--response curve from observational data. Continuous-treatment causal
+methods de-confound treatment from covariates---balancing representations,
+multi-head dose architectures such as DRNet, or amortised interventional
+predictors---to recover $\mathbb{E}[Y\mid do(t)]$ under strong ignorability and
+positivity~\citep{schwab2020drnet,scholkopf2021}. DOCAS and these methods both
+concern interventional dose--response curves, but from opposite ends: they
+\emph{recover} an identifiable estimand from data, whereas DOCAS assumes the
+effect is \emph{not} identifiable (insulin is dosed precisely in response to
+hyperglycaemia, violating ignorability) and therefore substitutes a stated
+target function~$\tau$ for the missing experiment. DOCAS also aligns the working
+forecaster the DSS already uses via data augmentation, rather than fitting a
+separate causal-effect estimator with its own architecture.
+
+Within glucose forecasting, alignment has instead been imposed through
+physiological preprocessing~\citep{prendin2023,zecchin2012,mirshekarian2017},
+formal conformance penalties~\citep{kushner2020,kushner2020dt}, and hard
+monotonic models~\citep{you2019,runje2023}. LightGBM provides the latter through
+monotone constraints~\citep{ke2017}, which we include as a comparator
+in Table~\ref{tab:ohio}. Other approaches encode mechanistic inputs
+\citep{wolber2025multimodal}, align internal representations to a simulator by
+Interchange Intervention Training~\citep{esponera2025}, or constrain a synthetic
+CGM generator~\citep{prendin2025mongan}. Outside T1D, expert-gated synthetic
+dose--outcome supervision has also been proposed for personalized drug
+dosing~\citep{verma2025genex}. Table~\ref{tab:alignment-strategies} summarizes
+the main distinctions.
+
+\FloatBarrier
+\input{tables/table_related}
+
+DOCAS is therefore an explanation-guided repair method in spirit, but it aligns
+the interventional audit curve to a target function~$\tau$ rather than any
+attribution: it does not optimize SHAP values, causal or otherwise. Synthetic
+rows train any model against a full user-defined target over the intervention
+grid, not only an attribution sign, feature mask, or monotonic split
+constraint, and without assuming the effect is identifiable from data. The ReplayBG experiments
+(Section~\ref{subsec:replay-results}) then test whether this aligned
+counterfactual behaviour improves DSS safety.
+
+\section{Methods}\label{sec:methods}
+
+All code to reproduce the results reported in this manuscript is available on
+GitHub (\url{[GITHUB_REPOSITORY_URL]}).
+
+Figure~\ref{fig:flowchart} summarizes the DOCAS pipeline: a user-supplied
+model is trained on observational data (Section~\ref{subsec:baseline}),
+anchor contexts are selected by a context rule and swept along a user-defined
+target function (Section~\ref{subsec:target}), a new model is trained on real
+and synthetic rows (Section~\ref{subsec:augment}), and the result is scored on
+held-out alignment and RMSE (Section~\ref{subsec:probe},
+Section~\ref{subsec:software}). The subsections below instantiate this
+interface for T1D glucose forecasting; Section~\ref{subsec:replay-results}
+embeds the aligned model in decision support.
+
+\begin{figure*}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/docas_flowchart.png}
+  \caption{DOCAS pipeline (generic interface). A user-supplied baseline
+  model is probed on anchor contexts selected by a context rule; sweeping the
+  intervention feature traces the \emph{interventional audit curve}
+  $u\mapsto\hat g(x,u)$---not a feature attribution---and synthetic labels on
+  each anchor follow a user-defined target~$\tau$ for that curve. The T1D
+  preset holds the ReplayBG-derived PH30/PH60 response $R_h$ fixed
+  (Eqs.~\ref{eq:replay-insulin}--\ref{eq:target}) and augments observational
+  training with synthetic $(x,u,\tau)$ rows on hyperglycaemic anchors before
+  refitting (Section~\ref{subsec:augment}).}
+  \label{fig:flowchart}
+\end{figure*}
+
+\subsection{Models and OhioT1DM protocol}\label{subsec:baseline}
+For each participant we train forecasters $f_b$ that map a feature vector
+$x_t$ (recent CGM, insulin, carbohydrate, and time-of-day channels, each
+min--max scaled to $[0,1]$) to the change in CGM over a prediction horizon
+$h$. The predicted future glucose is
+$\hat g_b(x)=\mathrm{CGM}_t+f_b(x)$, evaluated at $h=30$ and $h=60$~min.
+The primary backbone is a gradient-boosted regression tree
+(LightGBM~\citep{ke2017,friedman2001}). As comparators we also train
+(i)~LightGBM with a hard monotone-decreasing constraint on the insulin
+feature~\citep{ke2017}, and (ii)~a Prendin-style LSTM family matching
+interpretable-DL4BGP~\citep{prendin2023}: np-LSTM (raw bolus/meal impulses;
+LSTM(64)+Dense, 100 epochs, batch size 256), p-LSTM (offline IOB/COB
+smoothing plus Dense with tanh activation), and DOCAS LSTM (the same
+synthetic-augmentation loop applied to the p-LSTM backbone).
+
+Following the OhioT1DM preprocessing of Marling et
+al.~\citep{marling2020} and Prendin et al.~\citep{prendin2023}, each
+participant's first six monitoring weeks form the training set and the final ten
+days the held-out test set; CGM gaps under 30~min in training are linearly
+interpolated and test-set gaps are left missing.\label{subsec:ohio-protocol}
+Inputs are min--max scaled to
+$[0,1]$ using training-set statistics. For LightGBM (and the offline features
+fed to p-LSTM / DOCAS LSTM), insulin and carbohydrate channels are converted to
+insulin-on-board and carbohydrate-on-board traces (rapid bolus IOB plus active
+basal, and meal absorption); np-LSTM instead receives the raw bolus and meal
+impulses. The regression target is the
+\emph{change} in CGM over the horizon ($\Delta\mathrm{CGM}$), not absolute
+future glucose; held-out RMSE is therefore computed on $\Delta\mathrm{CGM}$ in
+mg/dL after inverse scaling. We report cohort means $\pm$ standard deviations
+across all 12 OhioT1DM participants. These choices differ from Prendin et
+al., who evaluated a single compliant subject (patient~588), predicted absolute
+future CGM, and scaled features to $[-1,1]$. Pointwise RMSE values are
+thus \emph{not} directly comparable across the two studies; we cite Prendin et
+al.\ for the attribution--DSS mismatch and replay on patient~588
+(Section~\ref{subsec:replay-results}), not for numerical parity of forecasting
+error.
+
+\subsection{DOCAS dose--response alignment}\label{subsec:probe}
+DOCAS operates on two curves at each anchor context~$x$, selected by a
+\emph{context rule} (here baseline-predicted future glucose above
+$170$~mg/dL). A \emph{counterfactual probe} fixes $x$, sweeps the intervention
+feature $a$ (here bolus insulin $u$) on a dose grid, and reads off model
+predictions---Pearl's $do(a)$ query with non-intervened features held at their
+values in~$x$~\citep{pearl2009causality}. The \emph{interventional audit
+curve} $u\mapsto\hat g_b(x,u)$ is that trajectory: the model's dose--response
+map at~$x$, not a scalar feature attribution. The \emph{target function}
+$\tau(x,u)$ (Eq.~\ref{eq:target}) is the domain prior for how the forecast
+\emph{should} change; synthetic rows use $\tau$ as their label.
+\emph{Alignment error} is the RMSE (mg/dL) between audit curve and target function
+on absolute future-CGM amplitude on held-out hyperglycaemic test contexts
+(Section~\ref{subsec:ohio-results}).
+
+We probe each trained model with an additional correction dose: hold the
+anchor's observed insulin-on-board (IOB) and all remaining features fixed,
+and expose a separate added-dose feature $U_{\max}u$ for $u\in[0,1]$, with
+$U_{\max}=10$~U (observational rows keep this channel at zero). The resulting
+audit curve is what a bolus-sizing DSS reads off. In principle it
+should slope downward; in practice it often does not, because insulin coincides
+with hyperglycaemia in observational data and the learned audit curve is
+frequently flat, noisy, or even
+rising~\citep{bergman1979,cobelli2009,prendin2023}. Because this effect is not
+identified from confounded observational data, we do not estimate it; we
+specify $\tau(x,u)$ and train the model so its audit curve matches it.
+
+The fix is to teach the model a mechanistic target curve. On hyperglycaemic
+contexts---those whose baseline-predicted future glucose exceeds $170$~mg/dL,
+just above the $140$--$180$~mg/dL time-in-range
+ceiling~\citep{battelino2019}---we derive $\tau(x,u)$ from ReplayBG's
+single-meal T1D model~\citep{cappon2023}.\label{subsec:target}
+In implementation units, its insulin and glucose states obey
 \begin{equation}
-    \tau(i) \;=\; y_0 \;-\; A\,s(i), \qquad \tau(0)=y_0,
-    \label{eq:surface}
+\begin{aligned}
+\dot I_{\mathrm{sc1}}&=-k_d I_{\mathrm{sc1}}+I(t-\gamma),&
+\dot I_{\mathrm{sc2}}&=k_d I_{\mathrm{sc1}}-k_{a2}I_{\mathrm{sc2}},\\
+\dot I_p&=k_{a2}I_{\mathrm{sc2}}-k_eI_p,&
+\dot X&=-p_2X+p_2\frac{SI}{V_I}(I_p-I_{pb}),\\
+\dot G&=-[S_G+\rho(G)X]G+S_GG_b+Ra/V_G,&
+\dot{IG}&=(G-IG)/\alpha ,
+\end{aligned}
+\label{eq:replay-insulin}
 \end{equation}
-where $y_0$ is the model's marginal partial dependence at $i{=}0$, $A>0$ sets the drop amplitude from the patient's baseline spread, and $s(i)$ is a fixed logistic basis on normalized insulin $i\in[0,1]$.
+where the observable $IG$ is interstitial glucose and $\gamma=8$~min is the
+subcutaneous-input delay. We reproduce ReplayBG's one-minute backward-Euler
+updates exactly. A dose $U_{\max}u$ is delivered as the same one-minute
+$1000U_{\max}u/w$ mU/kg correction pulse used by the replay controller for
+body weight $w$; all states start at basal steady state with
+$G=IG=G_{\mathrm{ref}}=220$~mg/dL.
 
-\paragraph{Ten-node partial dependence.}
-We fix non-insulin covariates at a reference validation context and evaluate the prediction at $N{=}10$ evenly spaced insulin levels $\{i_k\}_{k=0}^{9}$.
-The alignment error is
+Let $IG_h(u;w)$ be the resulting interstitial glucose at horizon $h$. We
+subtract the matched no-bolus trajectory so that the simulator supplies only
+the incremental insulin effect, while the fitted baseline retains each
+anchor's meals and glucose trend:
 \begin{equation}
-    \varepsilon_{\mathrm{I}} \;=\; \sqrt{\tfrac{1}{N}\sum_{k=0}^{N-1}\bigl(\bar{f}(i_k)-\tau(i_k)\bigr)^2},
-    \qquad \bar{f}(i_k) = f(x_{\mathrm{ref}},\, i_k).
-    \label{eq:err}
+  R_h(u;w)=\frac{IG_h(0;w)-IG_h(u;w)}{G_{\mathrm{ref}}},
+  \qquad
+  \tau(x,u)=\hat g_b(x)\,[1-R_h(u;w)] .
+  \label{eq:target}
 \end{equation}
+The simulator parameters are fixed before OhioT1DM fitting at the modes of the
+ReplayBG priors used in our replay pipeline ($S_G=0.0174$~min$^{-1}$,
+$p_2=0.11$~min$^{-1}$, $SI=1.15\times10^{-3}$,
+$k_{a2}=0.0114$~min$^{-1}$, and $k_d=0.0204$~min$^{-1}$); the remaining
+parameters use ReplayBG defaults. Only measured body weight varies by
+participant. At $w=75$~kg and $U_{\max}=10$~U, this recurrence gives
+$R_{30}(1)=0.040$ and $R_{60}(1)=0.347$. Thus the PH30 target falls gradually,
+whereas the PH60 response is much larger and becomes steeper at high dose;
+this behaviour is generated by the simulator rather than imposed with a
+hyperbolic shape (Figure~\ref{fig:target}).
 
-\paragraph{Sequential node-wise augmentation.}
-When $\varepsilon_{\mathrm{I}}$ is too large, iSHAP adds synthetic training rows and retrains (Figure~\ref{fig:flow}).
-Fitting proceeds left-to-right: for each node $k$, synthetic rows copy the reference context with insulin set to $i_k$ and labels $y_{\mathrm{syn}} = \hat{y} + \bigl(\tau(i_k)-\bar{f}(i_k)\bigr)$, with escalating sample weights and duplicates until nodes $0,\ldots,k$ match within $0.05$~mg/dL and validation RMSE stays within $0.05$~mg/dL of the baseline.
-The exported predictor is the retrained model; the plotted PDP \emph{is} the ten evaluated nodes.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.88\linewidth]{images/ishap_flowchart.png}
-    \caption{iSHAP workflow: train a baseline model, audit its insulin marginal at ten nodes, then sequentially add synthetic rows with delta labels and retrain until each node matches the target sigmoid without degrading RMSE.}
-    \label{fig:flow}
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/target_function.png}
+  \caption{ReplayBG-derived DOCAS target (Section~\ref{subsec:target}).
+  \textbf{Left:} absolute target future CGM
+  $\tau=\hat g_b[1-R_h(u;w)]$ at $\hat g_b=220$~mg/dL for PH30 and PH60;
+  solid curves use $w=75$~kg and shaded bands span body weights
+  $50$--$100$~kg. The dotted line marks $180$~mg/dL.
+  \textbf{Right:} fractional lowering $R_h(u;w)$ at $w=75$~kg; a full
+  $10$~U correction removes about $4\%$ of future CGM by $30$~min and
+  about $35\%$ by $60$~min. The $x$-axis is additional correction insulin
+  under the counterfactual probe (separate intervention channel).}
+  \label{fig:target}
 \end{figure}
 
-\subsection{Clinical evaluation}
-\label{sec:auditing}
+To turn this target into training signal, we form candidate
+$(x,u)$ pairs on hyperglycaemic anchors with an evenly spaced interventional
+grid $u\in[0,1]$, label each with~\eqref{eq:target}, and append the resulting
+synthetic rows to the observational training set.\label{subsec:augment}
+A user-chosen model (here LightGBM or p-LSTM) is then fit on the combined real
+and synthetic data with a fixed synthetic-row weight, so it learns the
+target-curve shape on hyperglycaemic contexts while retaining accuracy on the
+original rows.
+Optional residual-correction passes reweight the synthetic labels toward the
+current model's residual on the audit grid. Because $R_h$ is taken from ReplayBG
+prior-mode parameters (with only body weight varying by participant), the
+mechanistic amplitude is not tuned against the forecasting loss: the model
+cannot ``win'' by flattening $\tau$. Alignment in Table~\ref{tab:ohio} is
+reported as absolute future-CGM RMSE in mg/dL.
 
-We compare baseline and iSHAP models on hold-out error, insulin marginal partial dependence (Figure~\ref{fig:pdp}), and---following \citet{prendin2023shap}---a corrective-insulin DSS replayed with ReplayBG \citep{cappon2023replaybg} (Figure~\ref{fig:replay}).
-When CGM exceeds $180$~mg/dL at least two hours after a meal, the DSS searches doses $0$--$10$~U to bring predicted glucose toward $120$~mg/dL using each model's own insulin sensitivity.
-Models with a flat or wrong-sign insulin effect choose zero dose.
-For postprandial windows we require ReplayBG twins that reconstruct the observed glucose (RMSE $\le 30$~mg/dL) and respond to insulin ($\ge 5$~mg/dL drop after a $4$~U probe).
-Outcomes are time in range (TBR/TIR/TAR), mean glucose, and hyperglycemia area above $180$~mg/dL \citep{battelino2019tir}.
+\subsection{Software interface}\label{subsec:software}
+DOCAS is an open-source Python package that exposes the pipeline in
+Figure~\ref{fig:flowchart} through a small, composable API. The user supplies
+four objects: (i)~a supervised model with standard \texttt{fit}/\texttt{predict}
+methods such as gradient-boosted trees or neural nets; (ii)~the intervention feature to perturb when generating
+counterfactual rows; (iii)~a \emph{context rule} that selects anchor states
+where alignment should apply (in T1D, baseline-predicted future glucose above
+$170$~mg/dL); and (iv)~a \emph{target function} $\tau(x,a)$ (Eq.~\ref{eq:target})
+that maps each anchor $x$ and intervention level $a$ to the desired outcome
+label for synthetic supervision.
 
-\section{Experiments}
+The core operation is the same in every use case: train a baseline on
+observational $(x,y)$ pairs, sweep the intervention grid on anchors selected
+by the context rule, evaluate $\tau$ on each $(x,a)$ pair, append the
+resulting synthetic rows, and train a new model on the combined data. \emph{How} $\tau$ is chosen
+is flexible. When domain knowledge already fixes the target completely---a
+null curve, a prescribed interaction surface, or simulator-derived response
+taken literally---the user can \emph{hardcode} $\tau$ and run a single
+augmentation and training pass; Section~\ref{subsec:ablation}
+(``hardcoded'' regime) illustrates this mode, and the main OhioT1DM
+experiments use the same pattern with Eq.~\ref{eq:target} held fixed.
+Nothing in this interface is
+T1D-specific: the ReplayBG-derived insulin curve is one bundled preset, and
+Section~\ref{subsec:ablation} demonstrates the same entry point with flat,
+interaction, full-range, and multi-feature targets. This paper reports the T1D preset and
+evaluation protocol; the package itself is domain-agnostic.
 
-\subsection{OhioT1DM cohort prediction}
+\section{Results}\label{sec:results}
 
-We applied iSHAP to all twelve subjects in the OhioT1DM 2018 and 2020 releases \citep{marling2020ohiot1dm}, using the official train/test splits and a thirty-minute prediction horizon.
-Table~\ref{tab:cohort} reports validation and test RMSE together with $\varepsilon_{\mathrm{I}}$ for each patient and for the cohort mean.
-Before alignment, $\varepsilon_{\mathrm{I}}$ was large for every subject (cohort mean $27.6{\pm}18.5$~mg/dL), indicating flat or wrong-sign insulin effects despite reasonable forecast accuracy (mean test RMSE $24.9{\pm}4.1$~mg/dL).
-After iSHAP, $\varepsilon_{\mathrm{I}}$ fell sharply (cohort mean $0.2{\pm}0.4$~mg/dL), while mean test RMSE changed by only $+0.2$~mg/dL.
-Figure~\ref{fig:pdp} shows the ten-node insulin marginal for subject~588: the baseline departs from the prescribed decreasing sigmoid, whereas after iSHAP the evaluated nodes track the target curve.
+\subsection{OhioT1DM forecasting}\label{subsec:ohio-results}
 
-\begin{table}[H]
-    \centering
-    \small
-    \caption{OhioT1DM prediction and insulin marginal alignment by patient ($\mathrm{PH}=30$~min).
-    Each cell reports baseline $\rightarrow$ iSHAP.
-    The final row gives the cohort mean $\pm$ standard deviation ($n{=}12$).}
-    \label{tab:cohort}
-    \begin{tabular}{lccc}
-        \toprule
-        Patient & Val.\ RMSE (mg/dL) & Test RMSE (mg/dL) & $\varepsilon_{\mathrm{I}}$ (mg/dL) \\
-        \midrule
-        540 & $23.66 \rightarrow 23.66$ & $31.72 \rightarrow 31.00$ & $16.3 \rightarrow 0.02$ \\
-        544 & $18.14 \rightarrow 18.07$ & $21.71 \rightarrow 22.25$ & $37.6 \rightarrow 0.04$ \\
-        552 & $22.17 \rightarrow 21.73$ & $21.72 \rightarrow 23.47$ & $16.5 \rightarrow 0.01$ \\
-        559 & $28.71 \rightarrow 28.75$ & $26.28 \rightarrow 26.96$ & $69.4 \rightarrow 0.02$ \\
-        563 & $18.83 \rightarrow 18.29$ & $22.03 \rightarrow 21.72$ & $14.0 \rightarrow 0.02$ \\
-        567 & $24.26 \rightarrow 24.03$ & $29.54 \rightarrow 29.50$ & $28.3 \rightarrow 0.02$ \\
-        570 & $19.72 \rightarrow 19.63$ & $19.34 \rightarrow 19.76$ & $11.8 \rightarrow 0.02$ \\
-        575 & $23.72 \rightarrow 23.75$ & $26.97 \rightarrow 26.72$ & $15.1 \rightarrow 0.01$ \\
-        584 & $27.79 \rightarrow 27.83$ & $30.27 \rightarrow 29.64$ & $14.1 \rightarrow 0.23$ \\
-        588 & $21.96 \rightarrow 21.91$ & $21.61 \rightarrow 21.72$ & $51.4 \rightarrow 0.29$ \\
-        591 & $26.79 \rightarrow 26.74$ & $25.61 \rightarrow 26.17$ & $40.8 \rightarrow 1.41$ \\
-        596 & $20.25 \rightarrow 20.05$ & $21.58 \rightarrow 22.09$ & $15.5 \rightarrow 0.02$ \\
-        \midrule
-        Mean $\pm$ SD & $23.0{\pm}3.5 \rightarrow 22.9{\pm}3.6$ & $24.9{\pm}4.1 \rightarrow 25.1{\pm}3.7$ & $27.6{\pm}18.5 \rightarrow 0.2{\pm}0.4$ \\
-        \bottomrule
-    \end{tabular}
-\end{table}
+We evaluated six forecasters on the OhioT1DM dataset~\citep{marling2020}
+under the protocol in Section~\ref{subsec:ohio-protocol}: baseline LightGBM,
+LightGBM with a hard monotone-decreasing constraint on the insulin
+feature~\citep{ke2017}, DOCAS LightGBM, and a Prendin-style LSTM family
+(np-LSTM, p-LSTM, and DOCAS LSTM) matching the Keras LSTM(64), 100-epoch,
+batch-256 setup of interpretable-DL4BGP~\citep{prendin2023}.
+Table~\ref{tab:ohio} reports cohort-mean held-out test RMSE and
+\emph{alignment error}: the RMSE between each model's interventional audit
+curve and the ReplayBG-derived target curve
+(Sections~\ref{subsec:probe} and~\ref{subsec:target}) on hyperglycaemic test
+contexts.
+Baseline LightGBM RMSE ($\approx22.5$ and $35.6$~mg/dL at PH30 and PH60) is in the
+same ballpark as the single-subject Ohio results reported by Prendin et
+al.~\citep{prendin2023}, but the two forecasting evaluations should not be read
+as a head-to-head replication because they differ in cohort scope (12 vs.\ one
+participant), prediction target ($\Delta\mathrm{CGM}$ vs.\ absolute future CGM),
+and input representation.
+Despite this observational accuracy, the unaligned LightGBM model retained
+substantial alignment error ($14.3\pm5.5$ and $29.9\pm15.3$~mg/dL).
+Figure~\ref{fig:drc} shows why: cohort-mean baseline audit curves are
+nearly flat or non-monotone across the insulin grid, consistent with the
+confounded insulin signatures reported by Prendin et al.\ and Kushner et
+al.~\citep{prendin2023,kushner2020}. Hard monotone constraints cut LightGBM
+alignment error only partially ($10.7\pm6.6$ and $21.8\pm6.9$~mg/dL) while
+slightly raising RMSE ($22.9\pm2.5$ and $36.0\pm4.0$~mg/dL). DOCAS reduced
+LightGBM alignment error to $3.5\pm1.9$ and $5.7\pm1.8$~mg/dL at PH30 and PH60
+while essentially preserving held-out RMSE ($22.4\pm2.8$ and $35.5\pm4.3$~mg/dL).
+Individual participant audit curves (faint lines in
+Figure~\ref{fig:drc}) confirm that alignment gains are cohort-wide rather than
+driven by a single subject.
+Figure~\ref{fig:flowchart} shows the fixed
+ReplayBG-derived target~$\tau$ (PH30/PH60 kinetic responses) and the synthetic
+rows DOCAS appends to observational training data for a representative
+participant.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.88\linewidth]{images/pdp_588.png}
-    \caption{Insulin marginal partial dependence for OhioT1DM subject~588 (normalized active insulin 0--100\%).
-    Blue: baseline ten-node PDP; green: after iSHAP; dashed grey: target decreasing sigmoid.}
-    \label{fig:pdp}
-\end{figure}
+\begin{figure*}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/dose_response_curves.png}
+  \caption{Held-out OhioT1DM interventional audit curves $\hat g(x,u)$ on
+  hyperglycaemic test contexts (Section~\ref{subsec:probe}). \textbf{Top:}
+  PH30; \textbf{bottom:} PH60. The $x$-axis is additional correction insulin
+  on the separate intervention channel while observed IOB and other features
+  are held fixed.
+  Faint lines: individual participants; bold
+  lines: cohort means. Alignment error in Table~\ref{tab:ohio} is RMSE (mg/dL)
+  between the audit curve and the target function~$\tau$ in
+  Figure~\ref{fig:flowchart}, measured on absolute future-CGM amplitude.}
+  \label{fig:drc}
+\end{figure*}
 
-\subsection{Decision-support replay}
+\FloatBarrier
+\input{tables/table1}
 
-To connect shape alignment with therapeutic consequences, we evaluated baseline and iSHAP models in the ReplayBG retrospective replay of \citet{prendin2023shap}, pooling fourteen well-posed postprandial windows from six patients that pass the twin quality gate (Section~\ref{sec:auditing}).
-The baseline withholds model-attributed corrective boluses in most windows (median CIB count $0$), mirroring the np-LSTM pathology, whereas iSHAP issues boluses when hyperglycemia persists and the aligned marginal supplies a finite correction factor.
-With safety constraints in place, median time in range is $78.1\%$ without DSS, $80.2\%$ with the baseline predictor, and $76.0\%$ with iSHAP (Table~\ref{tab:replay}); aggregate glycemic improvement from iSHAP DSS is therefore mixed at cohort scale, but alignment is a prerequisite for attribution-driven dosing where the baseline cannot act.
-Figure~\ref{fig:replay} shows a representative window on subject~588.
+Because DOCAS only requires a model with \texttt{fit}/\texttt{predict}, the
+same synthetic-target mechanism is architecture-agnostic
+(Section~\ref{subsec:software}). On the Prendin LSTM family in
+Table~\ref{tab:ohio}, np-LSTM retains large alignment error
+($13.8\pm9.0$ and $28.5\pm19.8$~mg/dL), p-LSTM recovers much of the expected
+insulin-lowering shape ($7.7\pm7.8$ and $20.2\pm10.0$~mg/dL), and DOCAS
+LSTM---the same synthetic rows on the p-LSTM backbone---tightens alignment to
+$1.9\pm0.8$ and $6.7\pm4.3$~mg/dL at PH30 and PH60 with only a small RMSE
+change. Section~\ref{subsec:ablation} stress-tests the claim on LightGBM by
+swapping the ReplayBG preset for flat, interaction, multi-feature, and
+full-range targets; the RMSE--alignment trade-off tracks the chosen $\tau$,
+not a tree-specific constraint.
 
-\begin{table}[H]
-    \centering
-    \small
-    \caption{Cohort ReplayBG glycemic outcomes across well-posed postprandial windows ($\mathrm{PH}=30$~min).
-    Medians [IQR] over fourteen windows from six patients; TBR/TIR/TAR are percentages of simulated glucose samples \citep{battelino2019tir}.}
-    \label{tab:replay}
-    \begin{tabular}{lcccccc}
-        \toprule
-        Therapy & TBR (\%) & TIR (\%) & TAR (\%) & Mean glucose & Hyper.\ area & CIB \\
-        \midrule
-        No DSS       & $0.0$ & $78.1$ [61.5--87.0] & $21.9$ [13.0--38.5] & $150$ [132--168] & $5.1$ [1.9--8.7] & $0$ \\
-        Baseline DSS & $0.0$ & $80.2$ [65.1--88.3] & $19.8$ [11.7--26.8] & $141$ [134--158] & $4.1$ [1.3--6.9] & $0$ ($0$~U) \\
-        iSHAP DSS    & $0.0$ & $76.0$ [63.5--86.5] & $24.0$ [13.5--36.5] & $146$ [135--166] & $5.0$ [2.3--7.8] & $0$ ($0$~U) \\
-        \bottomrule
-    \end{tabular}
-\end{table}
+\subsection{ReplayBG simulation}\label{subsec:replay-results}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.88\linewidth]{images/replay_588.png}
-    \caption{ReplayBG retrospective replay for one postprandial window (subject~588).
-    Top: observed CGM (dotted black), LightGBM baseline DSS (red), and iSHAP DSS (green).
-    Bottom: meal bolus (black) and corrective boluses from the aligned model (green).}
-    \label{fig:replay}
-\end{figure}
+Forecasting metrics alone do not establish clinical utility when models drive
+therapy. We therefore embedded baseline and DOCAS LightGBM controllers in the
+ReplayBG digital-twin framework~\citep{cappon2023}, replaying postprandial
+windows from patient~588---the compliant subject used by Prendin et
+al.~\citep{prendin2023}. For each eligible eight-hour window, ReplayBG
+identifies a personalized physiological model from observed insulin,
+carbohydrate, and CGM traces and simulates counterfactual glucose trajectories
+under alternative bolus policies; windows with twin RMSE above
+$25$~mg/dL are excluded from Table~\ref{tab:replay}. The corrective-bolus DSS
+follows Prendin et al.: triggered two hours after meal announcement when
+simulated CGM exceeds $180$~mg/dL, it selects the dose on a $0$--$10$~U grid that
+minimizes $(\hat g-120)^2+10u^2$ using the controller's PH-step forecast,
+scales the delivered bolus by a horizon gain
+$\sqrt{R_{30}(1)/R_h(1)}$ derived from the same ReplayBG target~$\tau$
+(gain~$1$ at PH30; $\approx0.34$ at PH60), and administers no bolus when
+additional insulin does not lower the predicted future glucose relative to no
+correction (the behaviour seen with Prendin et al.'s misaligned np-LSTM).
 
-\section{Discussion}
+Without decision support (No DS), mean TIR was $49.5\%$ with no
+time-below-range (TBR; Table~\ref{tab:replay})---a low mean driven by one
+severely hyperglycaemic eligible window. The \emph{baseline} controller
+---despite similar pointwise forecasting skill---raised mean TIR to
+$73.2\%$ at PH30 with $4.5\pm0.7$~U of corrective insulin, but introduced
+hypoglycaemia (mean TBR $3.1\pm6.3\%$, up to $12.5\%$ in an individual window).
+Where its audit curve shows only local, non-monotone predicted dips, the
+Prendin grid search still issues boluses; in other misaligned contexts it
+would withhold CIB as in Prendin et al.'s np-LSTM~\citep{prendin2023}. At PH60
+the horizon gain damps delivered doses ($1.9\pm0.5$~U); baseline TBR returned
+to $0\%$ while mean TIR remained $71.9\%$.
 
-iSHAP reframes model validation for decision-critical biomedical regression: we ask whether the insulin marginal at fixed clinical nodes respects domain knowledge, not only whether predictions fit held-out labels \citep{rudin2019stop,friedman2001greedy}.
-The OhioT1DM cohort shows that a standard tree ensemble can encode flat or wrong-sign insulin effects while maintaining competitive RMSE, and that sequential node-wise synthetic augmentation repairs the marginal with negligible forecast degradation.
+The \emph{DOCAS} controller achieved the intended alignment benefit. At PH30
+it raised mean TIR to $74.2\%$ versus $73.2\%$ for baseline, delivered slightly
+less corrective insulin ($4.3\pm3.5$~U vs.\ $4.5\pm0.7$~U), and reduced mean TBR
+from $3.1\pm6.3\%$ to $2.6\pm5.2\%$. At PH60 its monotone audit curve selected
+larger raw grid optima that survive the shared horizon gain
+($4.0\pm2.0$~U vs.\ $1.9\pm0.5$~U), raising mean TIR to $75.3\%$ versus $71.9\%$
+for baseline while keeping TBR at $0\%$ and cutting TAR. Figure~\ref{fig:patient588-effect}
+dissects a representative postprandial
+window for patient~588 at PH30 and PH60. The upper panels show simulated CGM
+after the corrective-bolus decision-support (CIB) trigger (vertical dotted line,
+two hours post-meal): the baseline controller issues $4.0$~U at PH30 and
+undershoots into hypoglycaemia, whereas DOCAS delivers $2.5$~U and remains
+inside the $70$--$180$~mg/dL band; at PH60 both arms stay in range
+($1.5$~U baseline vs.\ $3.5$~U DOCAS). The lower panels explain \emph{why}: at
+the same decision context (simulated CGM $\approx184$~mg/dL, identical IOB and
+meal state), the baseline audit curve is non-monotone and predicts
+\emph{rising} future glucose at higher corrective doses---yet local dips still
+let the CIB optimizer select a large bolus to chase the $120$~mg/dL target.
+The DOCAS model instead predicts monotone glucose lowering across the insulin
+grid at both PH30 and PH60, yielding the safer PH30 bolus and the stronger
+PH60 correction seen in the upper panels. These results support the Prendin
+et al.\ conclusion that a correctly shaped audit curve, not RMSE alone,
+determines DSS safety---while showing that alignment can be achieved
+\emph{post hoc} via synthetic target-curve augmentation rather than only
+through architectural preprocessing.
 
-The framework is \emph{model-agnostic} and \emph{functionally flexible}: any parametric target marginal can replace the decreasing sigmoid used here.
-It differs from architecture-level inductive bias (as in p-LSTM) in that it is applied post hoc \citep{prendin2023shap,koh2020concept}, and from pure explanation in that it closes the loop by altering training data \citep{lundberg2017unified}.
+\FloatBarrier
+\input{tables/table2}
 
-Limitations remain.
-We align one insulin marginal at a time at a single reference covariate context; joint carbohydrate--insulin surfaces are not yet supported.
-Subjects~584 and~591 retain residual node error above $0.2$~mg/dL under the validation RMSE cap.
-The ReplayBG analysis is retrospective; broader assessment would require more well-posed windows per subject and prospective protocols \citep{cappon2023replaybg}.
+\begin{figure*}[!htbp]
+  \centering
+  \includegraphics[width=0.88\textwidth]{figures/patient588_replay_window.png}
+  \caption{Representative patient-588 ReplayBG window (same postprandial period;
+  twin RMSE~$8.5$~mg/dL).
+  \textbf{Top:} simulated CGM trajectories for the observed data, the untreated
+  digital twin (No DS), and the baseline and DOCAS decision-support controllers
+  at PH30 (left) and PH60 (right); shaded band marks the 70--180~mg/dL target
+  range; dotted vertical line marks the corrective-bolus trigger
+  ($4.0$ vs.\ $2.5$~U at PH30; $1.5$ vs.\ $3.5$~U at PH60).
+  \textbf{Bottom:} interventional audit curves at the first CIB decision context
+  for each horizon (markers: delivered bolus). The baseline audit curve predicts
+  higher future glucose with more insulin; the DOCAS audit curve predicts
+  lowering at both horizons, explaining the safer PH30 bolus and the stronger
+  PH60 correction in the upper panels.}
+  \label{fig:patient588-effect}
+\end{figure*}
 
-\section{Conclusion}
+\subsection{Ablation: flexibility of synthetic-target alignment}\label{subsec:ablation}
 
-We introduced iSHAP, a model-agnostic procedure that aligns predictors with domain partial dependence curves through sequential synthetic augmentation and retraining.
-On OhioT1DM, the method reduces ten-node insulin marginal error from a cohort mean of $27.6$ to $0.2$~mg/dL across twelve patients without sacrificing predictive accuracy, and restores glucose-lowering insulin attribution needed for model-driven corrective boluses in a ReplayBG replay.
-Future work will extend the rule language to joint response surfaces and validate alignment on additional forecasters.
+The results above use one physiologically motivated target function: the
+ReplayBG-derived insulin~$\tau$. In the DOCAS package
+(Section~\ref{subsec:software}), that curve is merely a default \emph{preset}; the augmentation loop itself is agnostic to target
+choice---it fits whichever target function or surface the user supplies on
+contexts matched by the context rule. We probe this flexibility with five ablations on
+patient~588 at PH30 (Table~\ref{tab:ablation}, Figure~\ref{fig:ablation}), each
+starting from the same baseline model and deliberately using simple
+non-ReplayBG targets.
 
-\bibliographystyle{plainnat}
+\emph{Hardcoded hyperbolic target.} Forcing a fixed hyperbolic target (no
+ReplayBG kinetics) drives alignment error to $2.9$~mg/dL---comparable to the
+main DOCAS model's $3.8$~mg/dL on the same participant---but at an RMSE cost of
+$+5.4$~mg/dL, whereas ReplayBG-preset DOCAS essentially preserves RMSE on the
+cohort (Figure~\ref{fig:ablation}, panel~1; Table~\ref{tab:ohio}).
+A physiologically scaled $\tau$ therefore buys most of the alignment benefit
+without the accuracy cost of an aggressive synthetic amplitude; brute-force
+fitting can always buy more alignment, but the price is a model that no longer
+tracks real glucose dynamics away from the synthetic grid.
+
+\emph{Feature independence.} Setting the target amplitude to zero forces a
+perfectly flat target function: insulin is given \emph{no} effect on the forecast
+whatsoever (panel~2). The fitted audit curve reproduces this null shape almost
+exactly (alignment error $1.5$~mg/dL) at a small RMSE cost ($+1.0$~mg/dL),
+confirming that DOCAS can impose feature independence, not only a specific
+monotone shape, when that is the desired constraint.
+
+\emph{Insulin--CGM interaction (indirect effect).} Rather than shifting the
+forecast directly, we let insulin modulate \emph{how strongly} the current
+CGM value drives the forecast: the target sets
+$\partial\hat g/\partial\,\mathrm{CGM}=1$ at zero insulin (full pass-through)
+and $1-\delta_{30}=0.85$ at the maximum corrective dose. The fitted model
+recovers this slope schedule almost exactly ($1.00\!\to\!0.86$ learned vs.\
+$1.00\!\to\!0.85$ target; panel~3), showing that the same mechanism can encode
+indirect, interaction-type physiological priors---insulin's effect need not
+act on the forecast in isolation, but can act on another feature's effect.
+
+\emph{Two-dimensional insulin--CHO surface.} Finally we combine a hyperbolic
+insulin-lowering effect with a linear carbohydrate-driven rise in a single
+target surface, $\tau(x,u,c)=f_0(x)\bigl(1+\delta(c_{\mathrm{norm}}-r(u))\bigr)$
+(panel~4). The fitted surface tracks the target closely (surface
+RMSE $4.8$~mg/dL) at a modest RMSE cost ($+1.2$~mg/dL), demonstrating that
+target-curve alignment extends beyond one-dimensional insulin curves to joint
+multi-feature target surfaces.
+
+\emph{Full glycaemic range.} Restricting synthetic anchors to hyperglycaemia
+($f_0>170$~mg/dL) is intentional: the same hyperbolic $\tau$ applied across the
+full band down to the time-in-range floor ($f_0>70$~mg/dL) reaches strong
+full-band alignment ($2.5$~mg/dL) but at an RMSE cost of $+5.8$~mg/dL---on par
+with aggressive hyper-only hardcoded fitting and far above the near-zero
+ReplayBG-preset DOCAS RMSE delta (panel~5). Extending alignment into
+normoglycaemia therefore buys
+little clinically for corrective-bolus DSS (which triggers only above
+$180$~mg/dL) while further eroding observational forecasting skill; the
+hyperglycaemia-only context rule is what keeps the RMSE--alignment trade-off
+manageable.
+
+\FloatBarrier
+\input{tables/table3}
+
+\begin{figure*}[!htbp]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/ablation_flexibility.png}
+  \caption{Ablation study, patient~588, PH30. \textbf{1:} hardcoded, untuned
+  augmentation on hyperglycaemic anchors reaches tight alignment at a high RMSE
+  cost. \textbf{2:} a zero-amplitude target forces feature independence---a flat
+  target function. \textbf{3:} an insulin--CGM interaction target changes the
+  slope of CGM's effect on the forecast (indirect effect) rather than shifting
+  the forecast directly. \textbf{4:} a two-dimensional target surface combines
+  hyperbolic insulin lowering with a linear CHO-driven rise; the learned audit
+  surface (wireframe) tracks the target surface (shaded). \textbf{5:} the same
+  hyperbolic $\tau$ as in panel~1, but with anchors spanning the full
+  glycaemic band ($f_0>70$~mg/dL), including normoglycaemia.}
+  \label{fig:ablation}
+\end{figure*}
+
+\section{Discussion}\label{sec:discussion}
+
+This study demonstrates that observational glucose models can be
+accurate yet \emph{interventionally wrong}: they fit CGM trajectories while
+learning associative patterns induced by covariate bias between insulin, meals,
+and glycaemic state---high insulin predicts high future glucose because boluses
+are delivered into hyperglycaemic, meal-overlapping
+contexts~\citep{prendin2023,kushner2020}. SHAP and related
+explainability tools---including causal, do-operator attributions such as
+do-SHAP~\citep{janzing2020causal,jung2022doshapley}---are necessary to
+\emph{diagnose} such failures but, by themselves, only \emph{measure} the model
+and do not repair the learned interventional
+mapping~\citep{lundberg2017,miller2019}. DOCAS complements explanation with
+\emph{alignment}: it matches the model's interventional audit curve to a stated
+target function~$\tau$. Synthetic rows sampled along $\tau$ teach the audit
+curve how future glucose should change when insulin is varied holding other
+features fixed---the counterfactual probe $do(\mathrm{insulin}=u)$ that a
+bolus-sizing DSS actually issues~\citep{pearl2009causality,prendin2023,cappon2023}.
+
+The target in Eqs.~\eqref{eq:replay-insulin}--\eqref{eq:target}
+encodes the same delayed subcutaneous absorption, remote insulin action,
+glucose kinetics, and interstitial lag used in the downstream ReplayBG
+evaluation~\citep{cappon2023}. This matters qualitatively: ReplayBG predicts
+little correction-bolus effect by 30 minutes but a much larger effect by
+60 minutes, rather than a dose curve that falls most steeply immediately and
+then saturates. By restricting supervision to
+hyperglycaemic contexts above $170$~mg/dL, DOCAS focuses alignment where
+corrective semantics apply and avoids imposing large artificial drops on
+normoglycaemic states. The resulting curves preserve the monotonicity
+properties Kushner et al.\ verify formally in neural
+predictors~\citep{kushner2020} while retaining simulator-derived
+horizon and dose dependence.
+
+Table~\ref{tab:ohio} makes these contrasts quantitative on the same Ohio
+protocol. Hard monotone LightGBM constraints reduce PH30 alignment error only
+from $14.3$ to $10.7$~mg/dL; p-LSTM's physiological IOB/COB filters reach
+$7.7$~mg/dL; DOCAS LightGBM and DOCAS LSTM reach $3.5$ and $1.9$~mg/dL
+respectively, with a similar ordering at PH60. Relative to architectural
+approaches such as the physiological preprocessing layer in
+p-LSTM~\citep{prendin2023,zecchin2012,mirshekarian2017}, DOCAS is
+model-agnostic and optimizes the interventional audit curve directly without
+redesigning the network---and still improves the already-filtered p-LSTM
+backbone. Relative to monotonicity constraints,
+mechanistic LightGBM feature engineering~\citep{wolber2025multimodal}, or
+conformance penalties~\citep{kushner2020,ke2017}, it accepts arbitrary target
+curves---not only directional signs---and separates \emph{where} to align
+(context rule) from \emph{what} to align ($\tau$). Relative to
+full digital-twin or PINN hybrids~\citep{cappon2023,dallaman2007}, it requires
+no online identification of differential-equation parameters. Packaging DOCAS
+as an open-source library makes this flexibility explicit: practitioners in
+other domains can plug in their own target and context logic while reusing the
+same augmentation loop.
+
+Beyond T1D, the DOCAS software interface formalizes a general recipe for
+injecting prior knowledge into black-box models under covariate bias:
+(1)~specify the intervention feature; (2)~define a context rule and target
+function~$\tau$ from domain theory; (3)~augment observational training data
+with synthetic $(x,a,\tau)$ tuples sampled on selected anchors; and
+(4)~validate audit-curve alignment on held-out counterfactual probes, not only
+on observational error. Because model, context, and target are all
+user-supplied, the same code path covers pharmacological dose-finding with
+limited interventional data~\citep{scholkopf2021}, critical-care vasopressor
+titration, and settings where scanner metadata confounds
+predictions~\citep{zech2018,degris2024}---each with a different $\tau$ and
+anchor predicate. Process-driven synthetic data are already accepted in drug
+development when they preserve decision-relevant
+inferences~\citep{cobelli2009}; DOCAS applies the same philosophy at the
+level of \emph{model behaviour} rather than dataset generation.
+
+The cost of alignment is explicit in our T1D experiments, but with the
+ReplayBG preset it is small: cohort-mean RMSE is essentially unchanged when
+alignment is imposed---a compromise in the same spirit as the small accuracy gap between
+p-LSTM and np-LSTM in Prendin et al., which nonetheless produced large DSS
+differences~\citep{prendin2023}---but that cost is not uniform under more
+aggressive targets (Section~\ref{subsec:ablation}). Per-participant
+RMSE deltas and alignment gains vary widely (Figure~\ref{fig:drc}), and it
+remains unclear why alignment is comparatively cheap for some patients yet
+demands a larger forecasting penalty for others. Likely drivers include how
+strongly insulin is confounded with hyperglycaemia in each subject, how much
+observational trajectories already resemble the imposed target, and broader
+cohort heterogeneity in dosing behaviour and glycaemic variability; we do not yet
+know which of these dominates. For decision support where a single erroneous
+bolus can cause hypoglycaemia, a bounded trade-off is clinically acceptable when
+the alignment benefit is real~\citep{battelino2019,nimri2020}, but understanding
+when that compromise is unavoidable remains an open question.
+
+\paragraph{Limitations.}
+In the present T1D preset, alignment is deliberately \emph{partial}: synthetic
+anchors and the audit probe are restricted to hyperglycaemic contexts
+($f_0>170$~mg/dL), so the interventional curve is not constrained under
+normoglycaemia or mild elevation. Extending $\tau$ across the full band down to
+the time-in-range floor ($f_0>70$~mg/dL) improves full-band alignment but
+inflates held-out RMSE by $\approx+6$~mg/dL on patient~588
+(Section~\ref{subsec:ablation}), versus a near-zero RMSE delta for
+hyperglycaemia-only ReplayBG-preset DOCAS---confirming that broader context
+coverage competes
+directly with forecasting skill where a corrective-bolus DSS does not need it.
+The current target uses ReplayBG prior-mode parameters and
+patient body weight, but not patient-specific twinned insulin sensitivity,
+meal state, or the age distribution implicit in the IOB feature. It therefore
+represents a newly delivered correction as a separate added-dose channel
+alongside observed IOB, matching the replay controller probe but remaining a
+reproducible
+population prior rather than a fully individualized digital twin.
+Future work could condition the target on prospectively identified ReplayBG
+parameters and latent state~\citep{cappon2023,schiavon2018}. ReplayBG
+evaluation is currently
+restricted to patient~588; extending to additional OhioT1DM subjects and to
+prospective closed-loop trials remains necessary. DOCAS does not replace causal
+identification when unobserved confounders dominate---SHAP attributions can
+still mislead on individual instances, as Prendin et al.\ note for exercise
+and illness~\citep{prendin2023}. Finally, synthetic augmentation assumes the target function~$\tau$ is correct;
+misspecified priors could imprint a wrong interventional response as readily as
+observational bias imprints a wrong associational one.
+
+\paragraph{Future directions.}
+A first priority is to narrow any residual RMSE--alignment trade-off under
+aggressive or misspecified targets.
+Our T1D ReplayBG preset already obtains tight audit-curve alignment at
+negligible forecasting cost; it remains open whether richer target families,
+multi-horizon targets, or staged
+fitting that separates alignment from accuracy tuning can keep that property
+when $\tau$ is less physiologically matched. Closely
+related, we need to explain the large per-patient spread in that compromise:
+why alignment is near-costless for some OhioT1DM participants but expensive for
+others, and how subject-level confounding strength, baseline misalignment, and
+cohort heterogeneity jointly determine where synthetic augmentation can correct
+behaviour without eroding forecasting skill. Second, we plan to apply the same
+synthetic-augmentation interface beyond glucose forecasting to other biomedical
+datasets where observational training induces covariate bias: treatment timing or
+dose collinear with severity (intensive care, oncology dosing,
+pharmacovigilance), behavioural interventions delivered when risk is already
+elevated (readmission, deterioration alerts), and any setting where a model must
+answer a counterfactual ``what if we changed treatment?'' rather than only fit
+associative patterns. Third, runtime remains a practical barrier for heavier
+architectures: each residual-correction pass retrains on real plus synthetic
+rows, which is manageable for gradient-boosted trees but slower for neural
+nets. Faster variants could cache and warm-start repeated fits or substitute
+lightweight proxies during development. Finally, prospective
+validation---embedding DOCAS in live or shadow-mode decision support and
+extending ReplayBG-style replay beyond patient~588---is needed before clinical
+deployment.
+
+\section{Conclusion}\label{sec:conclusion}
+
+We presented DOCAS, an open-source Python package for synthetic-augmentation
+alignment that trains a new model on real and synthetic rows toward a
+user-specified target function~$\tau$. In type~1 diabetes we instantiate
+$\tau$ as a ReplayBG-derived correction-bolus response; on OhioT1DM, DOCAS
+outperforms baseline LightGBM, monotone-constrained LightGBM, and Prendin
+np-/p-LSTM on held-out audit-curve alignment while essentially preserving
+forecasting accuracy on both tree and LSTM backbones, and in ReplayBG
+simulation an aligned LightGBM controller increases time-in-range and reduces
+hypoglycaemia relative to an equally accurate but misaligned baseline. Because
+practitioners choose the model, context rule, and target function, DOCAS is
+more flexible than architecture-locked or monotonicity-only repair strategies.
+For decision support and hybrid closed-loop systems, validating interventional
+audit curves against stated target functions should be as routine as reporting
+RMSE; DOCAS offers a reusable path to that validation wherever domain knowledge
+specifies how predictions ought to change under intervention.
+
+\bibliographystyle{model1-num-names}
 \bibliography{references}
 
 \end{document}
