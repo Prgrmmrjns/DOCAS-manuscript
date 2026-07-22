@@ -6,7 +6,6 @@ from pathlib import Path
 import joblib, numpy as np
 
 DATA_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(DATA_ROOT / "src"))
 sys.path.insert(0, str(DATA_ROOT / "scripts"))
 
 from docas import DOCAS, F0_REF, future, interp_target, target_delta_ref

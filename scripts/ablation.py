@@ -10,8 +10,6 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-
 from docas import DOCAS, F0_REF, future
 from forecasters import train_baseline
 from ohio_t1dm_eval import DATA_ROOT, _alignment, _rmse_mgdl, load_baseline_model, round_metric
