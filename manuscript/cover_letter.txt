@@ -1,0 +1,46 @@
+Jonas C. Wolber
+Institute for Digital General Practice
+University Hospital RWTH Aachen
+Pauwelsstraße 30
+52074 Aachen, Germany
+Email: jwolber@ukaachen.de
+
+Editor-in-Chief
+Artificial Intelligence in Medicine
+Elsevier
+
+Dear Editor,
+
+Please consider our manuscript entitled
+
+“Insulin Dose–Response Alignment for Glucose Forecasting in Type 1 Diabetes”
+
+for publication in Artificial Intelligence in Medicine as an original methodological research contribution.
+
+The mere application of a published learner to clinical logs is outside the journal’s scope. This manuscript is not that: it operationalizes a training-time method, DOCAS, that aligns a supervised model’s individual conditional expectation (ICE) on one treatment feature to a generic, population-level dose–response curve. It does not infer biology, learn an unknown DRC, or individualize the curve; that curve is supplied. Post-hoc XAI can diagnose a wrong-signed ICE; it does not repair it. Synthetic do-style rows are labelled with the incremental target effect and the same architecture is trained once on observational and synthetic data.
+
+We test this on type 1 diabetes glucose forecasting, where the insulin response is known and a wrong-signed forecast is clinically dangerous. On OhioT1DM (n=12) and AZT1D (n=24), the fitted insulin response tracks the stated population DRC at a small held-out RMSE cost. In a ReplayBG corrective-bolus evaluation on open-loop OhioT1DM, the aligned model raises post-decision time in range from 73.61 to 76.01 percent with no time below range under an explicit hypoglycaemia guard.
+
+We believe this fits the journal’s aim: a concrete AI methodology with a demonstrated medical decision-support case, rather than a routine application of an existing algorithm.
+
+Submission checklist (Guide for Authors):
+• Article type: original research contribution; single anonymized review.
+• Abstract: unstructured, ≤250 words; 7 English keywords.
+• Highlights: five bullets, each ≤85 characters (manuscript/highlights.txt).
+• Graphical abstract: manuscript/figures/graphical_abstract.png (also .svg).
+• CRediT roles are given on the title page.
+• Data and code availability statements are in the manuscript. OhioT1DM is under a data-use agreement; AZT1D is public. Study code: https://github.com/Prgrmmrjns/DOCAS-manuscript. Method package: https://github.com/Prgrmmrjns/docas.
+• Ethics: secondary analysis of de-identified public datasets; no new human participants.
+• Funding: no specific grant from public, commercial, or not-for-profit agencies.
+• Competing interests: none.
+• Generative AI in manuscript preparation will be declared in Editorial Manager as required. No generative-AI tool is an author.
+• Appendices (MLP learner, lag features, unguarded dosing, pump-settings target DRC) are in the same file for review and can be moved to supplementary material at production.
+
+This manuscript is original, has not been published previously (except as a preprint, thesis, or abstract, if applicable), and is not under consideration elsewhere. All authors approve the submission.
+
+Thank you for your consideration.
+
+Sincerely,
+
+Jonas C. Wolber
+Corresponding author

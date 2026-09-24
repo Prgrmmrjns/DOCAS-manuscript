@@ -1,6 +1,6 @@
-DOCAS aligns models to ReplayBG-derived insulin dose--response curves via synthetic augmentation.
-Observational CGM data confound insulin with hyperglycaemia, corrupting counterfactual dose--response behavior.
-OhioT1DM (12 pts): DOCAS beats baseline, monotone LightGBM, and Prendin np-/p-LSTM on alignment with negligible RMSE cost.
-Model-agnostic post-training; works with any fit/predict model without custom physiological architecture.
-ReplayBG on patient 588: DOCAS improves time-in-range and reduces PH30 baseline hypoglycaemia.
-Ablation: flat / interaction / multi-feature / full-range targets still work via the same loop.
+Observational models can copy treatment assignment, not pharmacological effect
+Alignment error scores each test ICE against a stated DRC, next to RMSE
+DOCAS aligns any learner to a stated DRC via synthetic do-rows; the DRC is supplied
+OhioT1DM 60 min AE falls 38.13 to 2.79 mg/dL for all 12 patients
+Aligned bolus advisor raises TIR; no hypoglycaemia under a guard
+Same architecture; one treatment feature; no change to the learner

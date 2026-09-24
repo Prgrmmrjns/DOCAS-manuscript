@@ -9,6 +9,8 @@
 \usepackage{microtype}
 \usepackage{siunitx}
 \usepackage{placeins}
+\usepackage{soul}
+\sethlcolor{yellow}
 
 \begin{document}
 \let\WriteBookmarks\relax
@@ -18,8 +20,8 @@
 \shorttitle{Insulin dose--response in type 1 diabetes}
 \shortauthors{J.C. Wolber}
 
-\title[mode=title]{Insulin Dose--Response Alignment for Glucose Forecasting\\
-in Type~1 Diabetes}
+\title[mode=title]{\hl{Insulin Dose--Response Alignment for Glucose Forecasting}\\
+\hl{in Type~1 Diabetes}}
 
 \author[1,2]{Jonas C. Wolber}
 \cormark[1]
@@ -103,16 +105,16 @@ Type~1 diabetes
 
 Glucose forecasters trained on observational type~1 diabetes data often predict
 that more insulin on board leads to higher future glucose~\citep{prendin2023,kushner2020,cappon2023,geirhos2020}.
-This is caused by confounding in how insulin is administered: patients usually
+\hl{This is caused by confounding in how insulin is administered: patients usually
 bolus when their glucose is already high or when they eat. In the logs, large
 insulin doses therefore appear together with high and rising glucose, and a
 model that minimizes the prediction error learns this association instead of
-the effect of the dose~\citep{pearl2009causality,scholkopf2021}.
+the effect of the dose}~\citep{pearl2009causality,scholkopf2021}.
 The held-out error does not reveal this problem, since the test data follow the
-same pattern. The problem only becomes apparent when the model is asked about a dose that was not
+same pattern. \hl{The problem only becomes apparent when the model is asked about a dose that was not
 given in that situation, for example a larger correction bolus. In this case
 the model extrapolates the learned association and predicts that glucose will
-rise.
+rise.}
 
 In clinical practice, such a model can lead to both underdosing and overdosing.
 Too little insulin leaves glucose high, and prolonged insulin deficiency
@@ -142,11 +144,11 @@ given.
 
 \noindent\textit{Relation between the dose--response curve and ceteris paribus plots in machine learning.}
 The \emph{dose--response curve} (DRC) describes the expected change in glucose
-under $do(\mathrm{insulin}{=}u)$ as a function of the dose~$u$. For insulin,
+under $do(\mathrm{insulin}{=}u)$ as a function of the dose~$u$. \hl{For insulin,
 this curve is well characterized at the population level: the more insulin,
 the larger the drop in glucose. Metabolic simulators such as UVa/Padova
 describe this curve and also quantify how insulin sensitivity varies between
-people~\citep{dallaman2007,cobelli2009}. The same question can also be asked of
+people}~\citep{dallaman2007,cobelli2009}. The same question can also be asked of
 a fitted glucose forecaster, and the resulting curves are known in machine
 learning as ceteris paribus plots~\citep{biecek2021}. To obtain such a curve,
 one takes a single situation from the data, i.e.\ one row of model inputs such
@@ -154,18 +156,18 @@ as current glucose, recent carbohydrates, and insulin on board. All inputs
 except insulin on board are kept fixed, insulin on board is varied from zero to
 a high dose, and the predicted glucose change is recorded at each value. The
 resulting curve is called \emph{individual conditional expectation} (ICE)
-curve~\citep{goldstein2015}. Here, ``individual'' refers to this one situation
+curve~\citep{goldstein2015}. \hl{Here, ``individual'' refers to this one situation
 and not to a patient-specific pharmacology, so a test set with many situations
-yields many ICE curves. Averaging them gives the \emph{partial dependence plot}
+yields many ICE curves.} Averaging them gives the \emph{partial dependence plot}
 (PDP)~\citep{friedman2001}. Both plots have their advantages. The PDP is a
 single curve and therefore easier to read when the question is how the
 forecaster responds to insulin on average. An ICE curve, in contrast, belongs
 to one context row, so a set of ICE curves shows how the response varies
 between situations, including situations in which the model responds in
-opposite directions that are hidden in the average. Note that the DRC and these
+opposite directions that are hidden in the average. \hl{Note that the DRC and these
 plots do not share the same y-axis. The DRC is the observed drop in glucose when
 a dose is taken, whereas ICE curves and PDPs show the change in the model's
-prediction when only the dose input is changed. A decision support system that
+prediction when only the dose input is changed.} A decision support system that
 chooses a bolus for one patient at one point in time relies on the ICE curve of
 that situation.
 
@@ -181,8 +183,8 @@ dose--response can serve as such a reference.
 \noindent\textit{Motivation for the study.}
 Prendin et al.\ showed that only a forecaster with a plausible insulin response
 improved glycaemic control as a corrective-bolus decision support system
-(DSS)~\citep{prendin2023}. Such decision support systems rely on data-driven forecasters that are trained on
-the patient's own logs and selected based on their prediction performance.
+(DSS)~\citep{prendin2023}. \hl{Such decision support systems rely on data-driven forecasters that are trained on
+the patient's own logs and selected based on their prediction performance.}
 Therefore, we aimed to develop a model-agnostic approach that offers a good
 compromise between prediction performance and alignment to a known population
 DRC, namely the UVa/Padova model, while keeping the forecaster from learning the
@@ -255,12 +257,12 @@ interventional DRC.
 \noindent\textit{Simulator-generated trajectories.}
 In T1D, generative models synthesize extra glucose time series, sometimes
 inside a digital-twin workflow, so that a learner can be pretrained or trained
-on a larger cohort~\citep{noguer2022,zhu2023glugan,prendin2025dt}. A digital
+on a larger cohort~\citep{noguer2022,zhu2023glugan,prendin2025dt}. \hl{A digital
 twin here is the concept of adapting a physiological simulator to an
-individual, not a model class. The added labels are simulated glucose
+individual, not a model class.} \hl{The added labels are simulated glucose
 trajectories rather than a sweep over insulin doses with everything else
 fixed, so the learner sees more data but is not told what the dose--response
-should be.
+should be.}
 
 \noindent\textit{Monotonicity and shape constraints.}
 Split constraints in boosted trees and architectural constraints in neural
@@ -272,11 +274,11 @@ sometimes a magnitude cap, but not a physiological curvature.
 
 \noindent\textit{Hybrid first-principles models and physics-informed networks.}
 Hybrid semi-parametric models combine a parametric first-principles block with
-a nonparametric data-driven block~\citep{vonstosch2014}. The equations remain
+a nonparametric data-driven block~\citep{vonstosch2014}. \hl{The equations remain
 part of the model at prediction time, and this structure also allows
-them to extrapolate beyond the data~\citep{fiedler2008,samadi2022}. In serial
+them to extrapolate beyond the data}~\citep{fiedler2008,samadi2022}. \hl{In serial
 designs a network estimates kinetic parameters that are passed on to balance
-equations, so the learner itself is not changed. Physics-informed neural
+equations, so the learner itself is not changed.} Physics-informed neural
 networks instead add the residuals of known differential equations to the
 training loss~\citep{raissi2019}. In biomedicine the equations usually sit in a
 dedicated simulator, and a digital twin is the concept of adapting such a
@@ -377,8 +379,8 @@ observed glucose drop 30 and 60 minutes after a correction bolus of a given size
 \paragraph{Phase 2: generating synthetic counterfactual instances.}
 In Phase~2, DOCAS adds synthetic training rows that show the model how the
 outcome changes when only the dose changes; the observed rows are kept as they
-are. The number of synthetic rows is a multiple of the number of observed
-training rows, which we call the synthetic budget. In this study, a budget of 20, i.e.\ twenty synthetic rows per
+are. \hl{The number of synthetic rows is a multiple of the number of observed
+training rows, which we call the synthetic budget.} In this study, a budget of 20, i.e.\ twenty synthetic rows per
 observed row, was selected on validation data (Section~\ref{subsec:ablation}).
 Each synthetic row is created as follows. First, a real training row is drawn
 at random, with replacement, and copied (star in Figure~\ref{fig:flowchart}C). It provides a
@@ -668,16 +670,16 @@ UVa/Padova run.
 This study aimed to evaluate and correct the insulin response of glucose forecasters trained on observational type~1 diabetes data. On OhioT1DM and AZT1D, DOCAS brought the insulin ceteris paribus plots close to the target DRC at a small RMSE cost, for every participant and for both CatBoost and an MLP (Table~\ref{tab:prediction}, Appendix~\ref{app:mlp}). Compared with the baseline, DOCAS reduced AE on OhioT1DM from $12.70$ to $1.44$~mg/dL at 30~minutes and from $38.13$ to $2.79$~mg/dL at 60~minutes (RMSE $+3.2\%$ and $+4.4\%$), and on AZT1D from $19.62$ to $1.70$~mg/dL and from $49.30$ to $4.13$~mg/dL (RMSE $+2.7\%$ and $+3.0\%$). In the ReplayBG evaluation, the ceteris paribus plot of the baseline turned upward beyond $2.5$~U and the corresponding DSS underdosed. The aligned forecaster, in contrast, stayed within $1.83$~mg/dL of the target curve, recommended $2.23$ instead of $1.09$~U on average, and increased the post-decision time in range from $73.61\%$ to $76.01\%$ with no time below range under the safety guard (Table~\ref{tab:replay}, Figure~\ref{fig:ohio-replay}).
 
 \textit{Alignment error and synthetic data.}
-A forecaster used for dosing has to answer how glucose changes if the dose changes and nothing else does, and the RMSE does not test this. In this study, every unaligned model responded to insulin with a flat or wrong-signed curve, including models with competitive RMSE. This can already be seen in the ceteris paribus plots. The AE, however, quantifies it, so that the insulin response can be reported next to the RMSE, compared across models and cohorts, and tracked when the synthetic budget changes (Tables~\ref{tab:prediction} and~\ref{tab:replay}). Since DOCAS adds the target curve to the training data and not to the model, the same procedure could be used for CatBoost and an MLP without a custom loss, layer, or mechanistic component. A monotonic constraint would only have fixed the sign, and a monotone ceteris paribus plot that is too flat or too steep still leads to under- or overdosing~\citep{wolber2025,kushner2020,runje2023}. It is important to note that the target DRC and the associated AE by no means measure a deviation from an absolute ground truth. The ceteris paribus plots of the patient's forecaster are compared with the same UVa/Padova curve, which describes the expected insulin action in a population and not in the individual patient~\citep{dallaman2007,cobelli2009}. We chose a population curve because an individual dose--response curve is hard to obtain. Insulin sensitivity varies between people and, within a person, with time of day and physical activity~\citep{hinshaw2013,visentin2015,riddell2017}. The observational logs cannot provide such a curve, since they are confounded in the way described above, and estimating it directly would require controlled dosing experiments that are rarely feasible in routine care. The population curve is therefore a distant, pharmacology-based reference, but aligning a forecaster to it may still be better than no alignment at all, since an unaligned forecaster can respond to insulin with the wrong sign. Accordingly, a low AE shows that the forecaster responds to insulin as described by the population curve, but not that the pharmacology of the individual patient has been recovered.
+A forecaster used for dosing has to answer how glucose changes if the dose changes and nothing else does, and the RMSE does not test this. In this study, every unaligned model responded to insulin with a flat or wrong-signed curve, including models with competitive RMSE. \hl{This can already be seen in the ceteris paribus plots. The AE, however, quantifies it, so that the insulin response can be reported next to the RMSE, compared across models and cohorts, and tracked when the synthetic budget changes} (Tables~\ref{tab:prediction} and~\ref{tab:replay}). Since DOCAS adds the target curve to the training data and not to the model, the same procedure could be used for CatBoost and an MLP without a custom loss, layer, or mechanistic component. A monotonic constraint would only have fixed the sign, and a monotone ceteris paribus plot that is too flat or too steep still leads to under- or overdosing~\citep{wolber2025,kushner2020,runje2023}. \hl{It is important to note that the target DRC and the associated AE by no means measure a deviation from an absolute ground truth.} The ceteris paribus plots of the patient's forecaster are compared with the same UVa/Padova curve, which describes the expected insulin action in a population and not in the individual patient~\citep{dallaman2007,cobelli2009}. We chose a population curve because an individual dose--response curve is hard to obtain. Insulin sensitivity varies between people and, within a person, with time of day and physical activity~\citep{hinshaw2013,visentin2015,riddell2017}. The observational logs cannot provide such a curve, since they are confounded in the way described above, and estimating it directly would require controlled dosing experiments that are rarely feasible in routine care. \hl{The population curve is therefore a distant, pharmacology-based reference, but aligning a forecaster to it may still be better than no alignment at all, since an unaligned forecaster can respond to insulin with the wrong sign.} Accordingly, a low AE shows that the forecaster responds to insulin as described by the population curve, but not that the pharmacology of the individual patient has been recovered.
 
 \textit{Relation to mechanistic, hybrid, and mixed-effects models.}
-Using a population mechanistic model as physiological basis for a data-driven model is an established strategy~\citep{froehlich2018}, and DOCAS follows this strategy: the biology comes from UVa/Padova and is not learned from the logs. Synthetic labels, explicit integration, and a physics-informed loss can all encode this prior knowledge, but only explicit integration keeps the equations in the model and thereby the ability to extrapolate~\citep{fiedler2008,samadi2022,vonstosch2014}. DOCAS, in contrast, extrapolates only as far as the distribution of the synthetic data reaches. The forecaster learns the insulin response for dosing scenarios that are missing from the logs, but only within the range covered by the synthetic rows, i.e.\ doses between zero and the domain maximum in contexts close to the observed ones. Mechanistic, hybrid, and NONMEM-type mixed-effects models answer ceteris paribus dose questions within their structure and quantify the variability between subjects~\citep{sheiner1980,mould2012,jones2013}. They are the better choice when the equations must hold exactly and have to extrapolate. DOCAS addresses a different setting, in which a data-driven forecaster trained on the patient's logs is used by a decision support system and its insulin response has to be checked and corrected. The DRC describes the population, whereas the observations are the patient's own glucose, meal, and insulin records. DOCAS combines both by training one model on the union of observed and synthetic rows. In this way, the population curve determines the insulin response, while the observations shape everything else the forecaster learns about the patient. Since the prior knowledge enters only through training rows that compete with the observed data, the ceteris paribus plots of DOCAS do not match the target DRC exactly. In contrast, a wrapper that adds the DRC after prediction to a forecaster trained without insulin matches the target DRC exactly by construction (AE${}=0$). However, this wrapper predicts glucose worse than DOCAS, with a 60-minute RMSE of $39.03$ instead of $35.80$~mg/dL on OhioT1DM and $36.81$ instead of $32.82$~mg/dL on AZT1D (Table~\ref{tab:ablation}). DOCAS therefore accepts a small AE in exchange for a better fit. Learning from the observations and the population curve together therefore results in a better fit of the patient's glucose than adding the curve afterwards.
+\hl{Using a population mechanistic model as physiological basis for a data-driven model is an established strategy}~\citep{froehlich2018}, and DOCAS follows this strategy: the biology comes from UVa/Padova and is not learned from the logs. Synthetic labels, explicit integration, and a physics-informed loss can all encode this prior knowledge, but only explicit integration keeps the equations in the model and thereby the ability to extrapolate~\citep{fiedler2008,samadi2022,vonstosch2014}. DOCAS, in contrast, extrapolates only as far as the distribution of the synthetic data reaches. The forecaster learns the insulin response for dosing scenarios that are missing from the logs, but only within the range covered by the synthetic rows, i.e.\ doses between zero and the domain maximum in contexts close to the observed ones. \hl{Mechanistic, hybrid, and NONMEM-type mixed-effects models answer ceteris paribus dose questions within their structure and quantify the variability between subjects}~\citep{sheiner1980,mould2012,jones2013}. They are the better choice when the equations must hold exactly and have to extrapolate. DOCAS addresses a different setting, in which a data-driven forecaster trained on the patient's logs is used by a decision support system and its insulin response has to be checked and corrected. \hl{The DRC describes the population, whereas the observations are the patient's own glucose, meal, and insulin records. DOCAS combines both by training one model on the union of observed and synthetic rows. In this way, the population curve determines the insulin response, while the observations shape everything else the forecaster learns about the patient.} Since the prior knowledge enters only through training rows that compete with the observed data, the ceteris paribus plots of DOCAS do not match the target DRC exactly. In contrast, a wrapper that adds the DRC after prediction to a forecaster trained without insulin matches the target DRC exactly by construction (AE${}=0$). However, this wrapper predicts glucose worse than DOCAS, with a 60-minute RMSE of $39.03$ instead of $35.80$~mg/dL on OhioT1DM and $36.81$ instead of $32.82$~mg/dL on AZT1D (Table~\ref{tab:ablation}). DOCAS therefore accepts a small AE in exchange for a better fit. \hl{Learning from the observations and the population curve together therefore results in a better fit of the patient's glucose than adding the curve afterwards.}
 
 \textit{Limitations.}
 In the main study, only one target was used, the UVa/Padova DRC derived from ReplayBG. The same curve was used to label the synthetic rows and to compute the AE, and the in-silico decision support evaluation was run in ReplayBG, whose simulated patients follow the same model. The evaluation is therefore not independent of the target: a forecaster aligned to this curve is scored against the curve it was trained on and tested in a simulator built on the same pharmacology. We addressed this limitation directly with a second, realistic target DRC based on each participant's pump settings, i.e.\ the correction factor and the insulin action curve~\citep{walsh2011}. DOCAS trained on this pump-settings target still aligned and still improved decision support (Section~\ref{subsec:ablation}, Appendix~\ref{app:clinical-tau}), so the benefits are not tied to the UVa/Padova DRC. In-silico dosing was only evaluated on open-loop OhioT1DM records, since closed-loop automated insulin delivery in AZT1D continuously adjusts basal rates and delivers automated boluses, which confounds an external DSS evaluation. Furthermore, the absence of time below range depends on the explicit hypoglycaemia safety guard (Appendix~\ref{app:unguarded}). Since single-horizon forecasters capture only $\approx 20\%$ of rapid-acting insulin action at 60~minutes, an external constraint against late nadirs is necessary. Finally, the in-silico replay covered 11 postprandial windows across four eligible participants and therefore provides proof-of-concept evidence rather than the evidence of a clinical trial.
 
 \textit{Future directions.}
-Our first aim is a better trade-off between alignment and accuracy (Section~\ref{subsec:trade-off}). Better sampling of the synthetic rows could bring the ceteris paribus plots closer to the target without any cost in RMSE, or even with an improvement. Compared with the UVa/Padova simulator itself, the aligned forecaster predicts the next hour of glucose from the patient's own logs while responding to insulin as described by the population curve. A next step would be to replace the population curve with the dose--response of each individual patient, estimated from the logs after adjusting for meals, time of day, and activity~\citep{hinshaw2013,riddell2017,cappon2023,prendin2025dt}. Type~1 diabetes was a suitable first application, since insulin pharmacodynamics are well characterized and public datasets with glucose, meal, and insulin logs are available. Beyond insulin, the approach can be applied to other treatments whenever a population dose--response for that input can be stated. An open-source implementation is available at \url{https://github.com/Prgrmmrjns/docas}.
+Our first aim is a better trade-off between alignment and accuracy (Section~\ref{subsec:trade-off}). Better sampling of the synthetic rows could bring the ceteris paribus plots closer to the target without any cost in RMSE, or even with an improvement. \hl{Compared with the UVa/Padova simulator itself, the aligned forecaster predicts the next hour of glucose from the patient's own logs while responding to insulin as described by the population curve.} A next step would be to replace the population curve with the dose--response of each individual patient, estimated from the logs after adjusting for meals, time of day, and activity~\citep{hinshaw2013,riddell2017,cappon2023,prendin2025dt}. Type~1 diabetes was a suitable first application, since insulin pharmacodynamics are well characterized and public datasets with glucose, meal, and insulin logs are available. Beyond insulin, the approach can be applied to other treatments whenever a population dose--response for that input can be stated. An open-source implementation is available at \url{https://github.com/Prgrmmrjns/docas}.
 
 \section{Conclusion}\label{sec:conclusion}
 

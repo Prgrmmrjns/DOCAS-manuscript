@@ -1,0 +1,51 @@
+\begin{table}[pos=t]
+\centering
+\caption{Approaches that align a supervised model to a stated behaviour, grouped by \emph{what}
+ the model is aligned to. Model agnostic: the same standard supervised
+ learner can be used without a custom layer, loss, or mechanistic core.
+ Example papers are representative, not exhaustive.}
+\label{tab:alignment-strategies}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular*}{\tblwidth}{@{\extracolsep{\fill}}p{2.05cm}p{2.35cm}c p{2.85cm}p{3.85cm}@{}}
+\toprule
+Approach & Example papers & \shortstack[t]{Model\\agnostic?} & Aligned to & Domain \\
+\midrule
+Explanation-guided training &
+Ross~\citep{ross2017}; Rieger~\citep{rieger2020}; Erion~\citep{erion2021} &
+No &
+Feature attributions, not the dose--response. &
+Decoy images and text~\citep{ross2017}; medical imaging~\citep{rieger2020}; genomics~\citep{erion2021} \\ \addlinespace
+Synthetic data augmentation &
+Zhang~\citep{zhang2018mixup}; Kaushik~\citep{kaushik2020cda} &
+Yes &
+Extra-row labels, not an interventional dose--response curve. &
+Image classification~\citep{zhang2018mixup}; natural language processing~\citep{kaushik2020cda} \\ \addlinespace
+Simulator-generated trajectories &
+Noguer~\citep{noguer2022}; Zhu~\citep{zhu2023glugan}; Prendin~\citep{prendin2025dt} &
+Yes &
+Simulated trajectories, not a dose sweep. &
+Type 1 diabetes glucose time series~\citep{noguer2022,zhu2023glugan,prendin2025dt} \\ \addlinespace
+Monotonicity and shape constraints &
+Ke~\citep{ke2017}; Runje~\citep{runje2023}; Kushner~\citep{kushner2020} &
+No &
+Sign of the treatment effect, not its curvature. &
+Tabular learning~\citep{ke2017,runje2023}; type 1 diabetes glucose--insulin~\citep{kushner2020} \\ \addlinespace
+Hybrid first-principles models &
+von Stosch~\citep{vonstosch2014}; Fiedler~\citep{fiedler2008} &
+No &
+First-principles block kept in the model. &
+Process systems engineering~\citep{vonstosch2014,fiedler2008} \\ \addlinespace
+Physics-informed networks &
+Raissi~\citep{raissi2019} &
+No &
+Partial or ordinary differential equation residuals in the loss. &
+Forward and inverse partial differential equations~\citep{raissi2019} \\ \addlinespace
+Interchange-intervention training &
+Esponera~\citep{esponera2025} &
+No &
+Hidden units, not the treatment individual conditional expectation. &
+Type 1 diabetes glucose forecasting~\citep{esponera2025} \\
+\bottomrule
+\end{tabular*}
+\end{table}

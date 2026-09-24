@@ -1,0 +1,26 @@
+\begin{table}[pos=htbp,width=\linewidth]
+\centering
+\caption{Ablations on both cohorts (mean~$\pm$~SD, seed~$42$). Synthetic budgets $0.1\times$, $1\times$, and $100\times$ versus the study preset $20\times$. Uniform IOB only draws every probe from $\mathrm{Uniform}[0,1]$ (no training-density mix). The last row uses a pump-settings DRC (Section~\ref{subsec:ablation}).}
+\label{tab:ablation}
+\scriptsize
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{OhioT1DM ($n=12$)} & \multicolumn{4}{c}{AZT1D ($n=24$)} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+ & \multicolumn{2}{c}{30 min} & \multicolumn{2}{c}{60 min} & \multicolumn{2}{c}{30 min} & \multicolumn{2}{c}{60 min} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+Ablation & Align. & RMSE & Align. & RMSE & Align. & RMSE & Align. & RMSE \\
+\midrule
+DOCAS ($20\times$ budget) & 1.51 $\pm$ 0.82 & 22.59 $\pm$ 2.62 & 2.75 $\pm$ 0.77 & 35.80 $\pm$ 3.64 & 1.64 $\pm$ 0.84 & 22.20 $\pm$ 3.33 & 3.64 $\pm$ 2.22 & 32.82 $\pm$ 5.21 \\
+Budget $0.1\times$ & 9.23 $\pm$ 3.21 & 21.87 $\pm$ 3.00 & 20.41 $\pm$ 8.08 & 34.47 $\pm$ 4.15 & 8.21 $\pm$ 3.28 & 21.64 $\pm$ 3.44 & 16.29 $\pm$ 6.88 & 31.78 $\pm$ 5.47 \\
+Budget $1\times$ & 4.62 $\pm$ 1.13 & 22.08 $\pm$ 2.87 & 9.50 $\pm$ 2.54 & 34.99 $\pm$ 3.86 & 4.48 $\pm$ 1.70 & 21.78 $\pm$ 3.38 & 8.12 $\pm$ 3.10 & 32.20 $\pm$ 5.44 \\
+Budget $100\times$ & 0.82 $\pm$ 0.42 & 22.69 $\pm$ 2.59 & 2.13 $\pm$ 0.96 & 35.96 $\pm$ 3.57 & 0.84 $\pm$ 0.58 & 22.32 $\pm$ 3.28 & 2.32 $\pm$ 1.85 & 33.11 $\pm$ 5.06 \\
+Uniform IOB only & 7.37 $\pm$ 4.26 & 22.48 $\pm$ 2.65 & 11.13 $\pm$ 6.74 & 35.73 $\pm$ 3.62 & 3.31 $\pm$ 1.23 & 22.12 $\pm$ 3.35 & 7.27 $\pm$ 3.56 & 32.61 $\pm$ 5.30 \\
+DRC applied after prediction & 0.00 $\pm$ 0.00 & 22.79 $\pm$ 2.59 & 0.00 $\pm$ 0.00 & 39.03 $\pm$ 5.36 & 0.00 $\pm$ 0.00 & 22.45 $\pm$ 3.21 & 0.00 $\pm$ 0.00 & 36.81 $\pm$ 8.38 \\
+DRC at $0.5\times S_I$ & 1.57 $\pm$ 0.91 & 22.58 $\pm$ 2.72 & 2.68 $\pm$ 0.79 & 35.23 $\pm$ 3.85 & 1.66 $\pm$ 0.94 & 22.17 $\pm$ 3.35 & 3.35 $\pm$ 2.35 & 32.56 $\pm$ 5.30 \\
+DRC at $2\times S_I$ & 1.48 $\pm$ 0.67 & 22.67 $\pm$ 2.44 & 4.48 $\pm$ 2.85 & 36.88 $\pm$ 3.83 & 1.61 $\pm$ 0.73 & 22.31 $\pm$ 3.29 & 4.57 $\pm$ 2.77 & 33.30 $\pm$ 5.26 \\
+Clinical DRC (pump settings) & 1.58 $\pm$ 0.83 & 22.90 $\pm$ 2.26 & 2.70 $\pm$ 0.75 & 35.72 $\pm$ 3.44 & 1.99 $\pm$ 1.03 & 22.60 $\pm$ 3.21 & 4.56 $\pm$ 3.54 & 33.54 $\pm$ 5.60 \\
+\bottomrule
+\end{tabular}}
+\end{table}

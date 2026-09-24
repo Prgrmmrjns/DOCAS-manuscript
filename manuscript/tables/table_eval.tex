@@ -1,0 +1,26 @@
+\begin{table}[pos=htbp,width=\linewidth]
+\centering
+\caption{Held-out CatBoost RMSE and alignment error on both cohorts.
+ Baseline: original training records only. DOCAS: original records plus
+ synthetic Phase~2 rows. Cohort mean~$\pm$~SD over 5 seeds. Bold$^*$:
+ significantly better arm (Section~\ref{subsec:ohio-protocol}). MLP and lag features in
+ Appendix~\ref{app:mlp}.
+}
+\label{tab:prediction}
+\scriptsize
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{30 min} & \multicolumn{2}{c}{60 min} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Approach & RMSE & Align. & RMSE & Align. \\
+\midrule
+\multicolumn{5}{@{}l}{\textbf{OhioT1DM} ($n=12$)} \\
+Baseline & \textbf{21.91 $\pm$ 3.04}$^*$ & 12.70 $\pm$ 5.14 & \textbf{34.32 $\pm$ 4.35}$^*$ & 38.13 $\pm$ 22.19 \\
+DOCAS & 22.61 $\pm$ 2.62 & \textbf{1.44 $\pm$ 0.67}$^*$ & 35.83 $\pm$ 3.64 & \textbf{2.79 $\pm$ 0.56}$^*$ \\
+\addlinespace
+\multicolumn{5}{@{}l}{\textbf{AZT1D} ($n=24$)} \\
+Baseline & \textbf{21.60 $\pm$ 3.44}$^*$ & 19.62 $\pm$ 16.11 & \textbf{31.82 $\pm$ 5.55}$^*$ & 49.30 $\pm$ 29.29 \\
+DOCAS & 22.19 $\pm$ 3.32 & \textbf{1.70 $\pm$ 0.84}$^*$ & 32.78 $\pm$ 5.18 & \textbf{4.13 $\pm$ 2.44}$^*$ \\
+\bottomrule
+\end{tabular}
+\end{table}
