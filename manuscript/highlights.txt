@@ -1,6 +1,0 @@
-Observational models can copy treatment assignment, not pharmacological effect
-Alignment error scores each test ICE against a stated DRC, next to RMSE
-DOCAS aligns any learner to a stated DRC via synthetic do-rows; the DRC is supplied
-OhioT1DM 60 min AE falls 38.13 to 2.79 mg/dL for all 12 patients
-Aligned bolus advisor raises TIR; no hypoglycaemia under a guard
-Same architecture; one treatment feature; no change to the learner
