@@ -1,21 +1,21 @@
 # Insulin Dose–Response Alignment for Glucose Forecasting in Type 1 Diabetes
 
-Code to reproduce every table, figure, and number in the paper:
+Code for the revision of:
 
 > J. C. Wolber, M. E. Samadi, J. Sellin, M. Mücke, A. Schuppert.
 > *Insulin Dose–Response Alignment for Glucose Forecasting in Type 1 Diabetes.*
-> Submitted to Artificial Intelligence in Medicine.
+> Intelligence-Based Medicine, IBMED-D-26-00789.
 
 The paper makes two contributions:
 
-- The **alignment error (AE)** measures how far the insulin response of a glucose forecaster is from a target dose–response curve (DRC). The response is read from individual conditional expectation (ICE) curves on the test set. The target is a population DRC taken from the UVa/Padova model.
-- **DOCAS** (dose–response curve alignment via synthetic augmentation) adds synthetic training rows at insulin doses that were never given. Each row is labelled from the target DRC, and the unchanged forecaster is trained once on real and synthetic rows together.
+- The **alignment error (AE)** measures how far a forecaster’s insulin response is from a stated population dose–response curve (DRC). The response is the individual conditional expectation (ICE) on the test set. The target is the UVa/Padova curve. AE is a plausibility check, not patient-specific ground truth.
+- **DOCAS** (dose–response curve alignment via synthetic augmentation) adds counterfactual training rows at insulin doses that were never given. Each row copies a real context and is labelled from that DRC. The forecaster is trained once, unchanged, on the real and synthetic rows together.
 
-A standalone, pip-installable implementation of DOCAS is available at [github.com/Prgrmmrjns/docas](https://github.com/Prgrmmrjns/docas). This repository contains only the study.
+A standalone package is at [github.com/Prgrmmrjns/docas](https://github.com/Prgrmmrjns/docas). This repository is the study.
 
 ## 1. Install
 
-You need Python 3.14 and [uv](https://docs.astral.sh/uv/).
+Python 3.14 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone https://github.com/Prgrmmrjns/DOCAS-manuscript.git
@@ -23,65 +23,42 @@ cd DOCAS-manuscript
 uv sync
 ```
 
-`uv sync` installs the exact package versions from `uv.lock`. This includes [ReplayBG](https://github.com/DIANA-UNIPD/replaybg) 2.x, pinned to the commit used for the paper. The code runs on the CPU and needs no GPU.
+`uv sync` installs the lockfile, including [ReplayBG](https://github.com/DIANA-UNIPD/replaybg) at the commit used for the paper. The study runs on CPU.
 
-The flowchart and the graphical abstract are exported from SVG with `rsvg-convert` (librsvg). Install it with `brew install librsvg` on macOS or `apt install librsvg2-bin` on Debian/Ubuntu. Without it, all other results are still produced.
+The flowchart is exported from SVG with `rsvg-convert` (`brew install librsvg` or `apt install librsvg2-bin`). The other figures do not need it.
 
 ## 2. Add the datasets
 
-Neither dataset can be redistributed, so both are excluded from the repository. Run the commands below from the repository root. The loaders read only these paths.
+None of the datasets can be redistributed. They are gitignored. Run the commands from the repository root.
 
-### OhioT1DM (12 participants)
+### MetaboNet v1.0
 
-OhioT1DM is released only after a data-use agreement. The current request steps are on [webpages.charlotte.edu/rbunescu/ohiot1dm.html](https://webpages.charlotte.edu/rbunescu/ohiot1dm.html) (Marling & Bunescu, 2020):
-
-1. Complete the data-use agreement at [ohio.qualtrics.com/jfe/form/SV_02QtWEVm7ARIKIl](https://ohio.qualtrics.com/jfe/form/SV_02QtWEVm7ARIKIl).
-2. Email the signed form to [liguo21@ohio.edu](mailto:liguo21@ohio.edu). Ohio University sends the dataset.
-
-The archive contains `2018/` and `2020/`, each with `train/` and `test/`. Place that directory at the repository root under the name `OhioT1DM`. Leave the XML files unchanged. The study uses the official train/test split.
+The revision reads OhioT1DM, AZT1D, HUPA-UCM, and T1D-UOM from MetaboNet v1.0 (Wolff et al., 2026), one model per person on the full record. Download the public train and test parquet files from [metabo-net.org](https://metabo-net.org) and place them here:
 
 ```text
-OhioT1DM/
-├── 2018/
-│   ├── train/
-│   │   ├── 559-ws-training.xml
-│   │   ├── 563-ws-training.xml
-│   │   ├── 570-ws-training.xml
-│   │   ├── 575-ws-training.xml
-│   │   ├── 588-ws-training.xml
-│   │   └── 591-ws-training.xml
-│   └── test/
-│       ├── 559-ws-testing.xml
-│       ├── 563-ws-testing.xml
-│       ├── 570-ws-testing.xml
-│       ├── 575-ws-testing.xml
-│       ├── 588-ws-testing.xml
-│       └── 591-ws-testing.xml
-└── 2020/
-    ├── train/
-    │   ├── 540-ws-training.xml
-    │   ├── 544-ws-training.xml
-    │   ├── 552-ws-training.xml
-    │   ├── 567-ws-training.xml
-    │   ├── 584-ws-training.xml
-    │   └── 596-ws-training.xml
-    └── test/
-        ├── 540-ws-testing.xml
-        ├── 544-ws-testing.xml
-        ├── 552-ws-testing.xml
-        ├── 567-ws-testing.xml
-        ├── 584-ws-testing.xml
-        └── 596-ws-testing.xml
+datasets/
+├── train.parquet
+└── test.parquet
 ```
+
+The first run builds `datasets/metabonet_full/` (one parquet per person) and `datasets/metabonet_known/`.
+
+### OhioT1DM and AZT1D raw files
+
+`scripts/main.py` and the patient-588 figures still read the original releases.
+
+OhioT1DM is released after a data-use agreement. Request steps are on [webpages.charlotte.edu/rbunescu/ohiot1dm.html](https://webpages.charlotte.edu/rbunescu/ohiot1dm.html) (Marling & Bunescu, 2020):
+
+1. Complete the form at [ohio.qualtrics.com/jfe/form/SV_02QtWEVm7ARIKIl](https://ohio.qualtrics.com/jfe/form/SV_02QtWEVm7ARIKIl).
+2. Email the signed form to [liguo21@ohio.edu](mailto:liguo21@ohio.edu).
+
+Place the archive, with `2018/` and `2020/` each containing `train/` and `test/`, at `OhioT1DM/`. Leave the XML files unchanged.
 
 ```bash
 find OhioT1DM \( -name '*-ws-training.xml' -o -name '*-ws-testing.xml' \) | wc -l
-# 24
 ```
 
-### AZT1D (24 of 25 participants)
-
-Download `AZT1D 2025.zip` (776 MB) from Mendeley Data, [doi.org/10.17632/gk9m674wcx.1](https://doi.org/10.17632/gk9m674wcx.1) (Khamesian et al., 2025). The same file is [on the dataset page](https://data.mendeley.com/datasets/gk9m674wcx/1). From the repository root:
+AZT1D is `AZT1D 2025.zip` (776 MB) on Mendeley Data, [doi.org/10.17632/gk9m674wcx.1](https://doi.org/10.17632/gk9m674wcx.1) (Khamesian et al., 2025):
 
 ```bash
 curl -L -o "AZT1D 2025.zip" \
@@ -90,84 +67,54 @@ unzip "AZT1D 2025.zip"
 mv "AZT1D 2025" azt1d
 ```
 
-The zip unpacks as `AZT1D 2025/`. Renaming that folder to `azt1d` is the layout the loader expects. It also contains `Visual Statistics/`, `README.txt`, and `Manuscript.pdf`. The study reads only the subject CSVs:
+Subject 14 is excluded in code: its CGM and fingerstick readings share one column.
 
-```text
-azt1d/
-└── CGM Records/
-    ├── Subject 1/Subject 1.csv
-    ├── Subject 2/Subject 2.csv
-    └── Subject 3/ … Subject 25/Subject 25.csv
-```
+No separate preprocessing step. `scripts/preprocessing.py` builds current CGM, bolus insulin on board, carbohydrates on board, and the 30- or 60-minute CGM change on a 5-minute grid. Scalers are fit on the training split only.
+
+## 3. Reproduce the revision
+
+Each command is resumable. Finished patients are skipped. Results land in `results/revision/`. Expect many hours.
 
 ```bash
-find azt1d/"CGM Records" -name 'Subject *.csv' | wc -l
-# 25
+uv run python scripts/ablation.py cohort
+uv run python scripts/ablation.py
+uv run python scripts/metabonet_comparators.py
+uv run python scripts/replay_eval.py revision
+uv run python scripts/visuals.py
 ```
 
-Subject 14 is in the zip and is excluded in the code because it has no isolated CGM channel: its CGM and fingerstick readings share one column. Each remaining subject is split chronologically, 80% train and 20% test.
+| Command | Writes | Where in the paper |
+|---|---|---|
+| `ablation.py cohort` | `results/revision/full_recent/` | Table 3 (Baseline and DOCAS) and Table 5 context-adjusted DOCAS forecasting. One JSON per person. Latest 8,000 training rows, seed 42, chronological 80/20 split. OhioT1DM, AZT1D, HUPA-UCM, T1D-UOM. |
+| `ablation.py` | `results/revision/full_ablation.json` | Table 5 forecasting columns. Budgets, uniform probes, post-hoc DRC, 0.5×/2× insulin sensitivity, pump-settings DRC. `weight` and `weight-replay` are the sample-weight arms. |
+| `metabonet_comparators.py` | `results/revision/full_comparators.json` | Appendix B. Monotone CatBoost, MLP, penalty MLP, MLP DOCAS, 12-lag CatBoost. Also the 90/120-minute endpoints. `lags` reruns the OhioT1DM and AZT1D lag fits. |
+| `replay_eval.py revision` | `results/revision/full_replay_open.json`, `results/revision/ablation_replay.json`, `results/revision/alt_replay.json` | Table 4, Table 5 ReplayBG, Appendix C, and Table 6 ReplayBG. |
+| `visuals.py` | `results/revision/pdp_mean_ices.json`, `manuscript/figures/` | Cohort-mean insulin curves, then the manuscript figures. |
 
-### Preprocessing
-
-No separate preprocessing step is needed. `scripts/preprocessing.py` reads the raw XML/CSV files on first use and builds the model inputs on a 5-minute grid:
-
-- current CGM;
-- bolus insulin on board, using the ReplayBG subcutaneous insulin model;
-- carbohydrates on board;
-- the target, which is the 30- or 60-minute change in CGM.
-
-Scalers are fitted on the training split only.
-
-## 3. Reproduce the paper
-
-```bash
-uv run python scripts/main.py
-```
-
-This one command runs the full study in dependency order and writes every result to `results/` as JSON:
-
-| Step | Where in the paper |
-|---|---|
-| CatBoost baseline vs DOCAS, both cohorts, 30/60 min, seeds 42–46 | Held-out accuracy and alignment (table and figure), trade-off figure |
-| MLP (five seeds) and CatBoost with 12 lag features (seed 42) | Supplementary: MLP and lag features |
-| Ablations: synthetic budget 0.1×–100×, uniform-only probes, DRC after prediction, 0.5×/2× insulin sensitivity | Ablation studies |
-| Pump-settings target DRC | Ablation studies, Supplementary: pump-settings target DRC |
-| ReplayBG corrective-bolus decision support on OhioT1DM: guarded, unguarded, pump-settings DRC, dose-penalty sweep | In-silico decision support, Supplementary: hypoglycaemia guard |
-| AZT1D automated-delivery profile | In-silico decision support |
-
-The full run fits several thousand models and ReplayBG digital twins, so expect it to take many hours on a laptop. Tables and figures are then written to `manuscript/tables/` and `manuscript/figures/`. The manuscript itself is not part of this repository.
-
-To rebuild only the tables and figures from existing `results/`:
-
-```bash
-uv run python scripts/tables.py
-```
+The LaTeX tables in `manuscript/tables/` are the manuscript sources. They are filled from those JSON files. `scripts/main.py` is the first-submission OhioT1DM and AZT1D pipeline (five seeds, then ablations and ReplayBG). It does not rebuild the revision tables.
 
 ### Reproducibility
 
-- All random choices are seeded:
-  - The main CatBoost and MLP results average seeds 42–46.
-  - Ablations, lag features, and ReplayBG use seed 42.
-  - ReplayBG twinning uses the library default seed.
-- Re-running a CatBoost fit with the same seed reproduces the stored RMSE and AE exactly.
-- MLP results can differ in the last digits across machines because of floating-point differences in PyTorch.
-- Study settings (seeds, horizons, synthetic budget, noise, target DRC parameters, sensor profiles) are defined in the `STUDY KNOBS` block at the top of `scripts/main.py`.
+- Revision fits use seed 42.
+- `scripts/main.py` averages CatBoost and MLP seeds 42–46. Its ablations and ReplayBG use seed 42.
+- The same seed reproduces a CatBoost RMSE and AE. MLP digits can move across machines because of PyTorch.
+- Study settings are the `STUDY KNOBS` block at the top of `scripts/main.py`.
 
 ## 4. Code layout
 
 ```text
 scripts/
-├── main.py           # study settings and the full pipeline (entry point)
-├── core.py           # DOCAS: target DRC, synthetic rows, alignment error, ICE curves
-├── preprocessing.py  # OhioT1DM and AZT1D loaders, insulin/carbohydrates on board
-├── forecasters.py    # CatBoost and MLP forecasters
-├── lgbm_lags.py      # lag-feature variant (12 × 5-minute lags per channel)
-├── ablation.py       # budget, sampling, wrapper, sensitivity, and pump-settings ablations
-├── replay_eval.py    # ReplayBG digital twins and the corrective-bolus decision support system
-├── tables.py         # LaTeX tables and statistics (Wilcoxon, Holm–Bonferroni)
-└── visuals.py        # figures
+├── main.py                 # study settings; first-submission pipeline
+├── core.py                 # target DRC, synthetic rows, alignment error
+├── preprocessing.py        # OhioT1DM, AZT1D, and MetaboNet loaders
+├── forecasters.py          # CatBoost, monotone CatBoost, MLP
+├── metabonet_comparators.py  # Appendix B, strata, long horizons, 12-lag fits
+├── ablation.py             # cohort fit, context-adjusted DOCAS, budgets, wrapper, sample weight
+├── replay_eval.py          # ReplayBG twins, corrective-bolus search, revision windows
+├── visuals.py              # figures
+└── tables.py               # first-submission LaTeX tables
 ```
 
 ## 5. Citation
 
-If you use this code, please cite the paper above. Please also cite the datasets (Marling & Bunescu, 2020; Khamesian et al., 2025) and ReplayBG (Cappon et al., 2023).
+Cite the paper above, the datasets (Marling & Bunescu, 2020; Khamesian et al., 2025; Wolff et al., 2026), and ReplayBG (Cappon et al., 2023).

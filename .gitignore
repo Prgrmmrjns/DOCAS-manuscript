@@ -1,55 +1,39 @@
-.cursor
+# Python
 .venv/
-.venv_pkg/
-.venv_dl4bgp/
-.venv_lstm/
+venv/
 __pycache__/
-**/__pycache__/
 *.pyc
 *.egg-info/
-.eggs/
+.pytest_cache/
 dist/
 build/
-.pytest_cache/
-.DS_Store
-.env
 
-# Large data — download OhioT1DM XML to repo root
+# Datasets (not redistributable; see README)
 OhioT1DM/
-datasets/ohio_t1dm.csv
+azt1d/
+datasets/
+*.parquet
 
-# Reference clones (not part of this repo)
-interpretable-DL4BGP/
-external/py_replay_bg/
-external/replaybg/
-tools/PaperBanana/
-tools/papervizagent/
-tools/paperbanana_out/
-tools/paperviz_out/
-tools/.venv/
-tools/PaperBanana/configs/model_config.yaml
-tools/papervizagent/configs/model_config.yaml
-
-# Local reference PDFs
-s41598-*.pdf
-
-# Regenerable outputs
+# Generated results, models, tables, and figures
 results/
 archive/
 images/
-experiments/out/
 
-# LaTeX build artifacts
-manuscript/*.aux
-manuscript/*.log
-manuscript/*.out
-manuscript/*.fls
-manuscript/*.fdb_latexmk
-manuscript/*.blg
-manuscript/*.abs
-manuscript/*.synctex.gz
+# Manuscript draft and submission material
+manuscript/
+submission/
+talk/
 
-# Vendored ReplayBG clone artifacts
-replaybg/.venv/
-replaybg/**/*.egg-info/
-replaybg/.pytest_cache/
+# Separate repositories
+docas/
+replaybg/
+
+# Local notes and editor/OS files
+logs.md
+NOTES.md
+requirements.txt
+.cursor/
+.devtool/
+*.code-workspace
+.DS_Store
+.env
